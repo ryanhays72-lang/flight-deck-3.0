@@ -285,6 +285,94 @@ app.post('/api/instructors', async (req, res) => {
   res.json(data[0]);
 });
 
+// =======================
+// PREFLIGHT ASSESSMENTS
+// =======================
+app.get('/api/preflight', async (req, res) => {
+  const { data, error } = await supabase
+    .from('preflight_assessments')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/preflight', async (req, res) => {
+  const {
+    studentId, aircraftId, date, time,
+    fuelLeft, fuelRight, oilLevel,
+    documentsOk, exteriorOk, cockpitOk, engineOk,
+    squawks, airworthy, studentName
+  } = req.body;
+
+  if (!studentId || !aircraftId || !date || !studentName) {
+    return res.status(400).json({ error: 'Student, aircraft, date, and signature are required' });
+  }
+
+  const { data, error } = await supabase
+    .from('preflight_assessments')
+    .insert([{
+      id: crypto.randomUUID(),
+      student_id: studentId,
+      aircraft_id: aircraftId,
+      date,
+      time: time || null,
+      fuel_left: fuelLeft ? parseFloat(fuelLeft) : null,
+      fuel_right: fuelRight ? parseFloat(fuelRight) : null,
+      oil_level: oilLevel || null,
+      documents_ok: documentsOk,
+      exterior_ok: exteriorOk,
+      cockpit_ok: cockpitOk,
+      engine_ok: engineOk,
+      squawks: squawks || null,
+      airworthy,
+      student_name: studentName,
+      status: 'submitted'
+    }])
+    .select();
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data[0]);
+});
+
+// =======================
+// MAINTENANCE
+// =======================
+app.get('/api/maintenance', async (req, res) => {
+  const { data, error } = await supabase
+    .from('maintenance')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/maintenance', async (req, res) => {
+  const { aircraftId, type, description, performedBy, date, nextDue, hobbsAtService, status } = req.body;
+
+  if (!aircraftId || !type || !date) {
+    return res.status(400).json({ error: 'Aircraft, type, and date are required' });
+  }
+
+  const { data, error } = await supabase
+    .from('maintenance')
+    .insert([{
+      id: crypto.randomUUID(),
+      aircraft_id: aircraftId,
+      type,
+      description: description || null,
+      performed_by: performedBy || null,
+      date,
+      next_due: nextDue || null,
+      hobbs_at_service: hobbsAtService ? parseFloat(hobbsAtService) : null,
+      status: status || 'completed'
+    }])
+    .select();
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data[0]);
+});
+
 // START SERVER
 const PORT = process.env.PORT || 3000;
 

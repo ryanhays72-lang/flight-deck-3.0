@@ -1,128 +1,543 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>FlightDeck</title>
+  <title>Flight Deck</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; color: #1e293b; display: flex; height: 100vh; overflow: hidden; }
 
-    /* Sidebar */
-    .sidebar { width: 240px; background: #0f172a; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
-    .sidebar-header { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .sidebar-header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-    .sidebar-header span { font-size: 12px; color: #64748b; margin-top: 2px; display: block; }
-    .nav-section { padding: 8px 0; }
-    .nav-label { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; padding: 12px 20px 4px; }
-    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; color: #94a3b8; font-size: 14px; transition: all 0.15s; }
-    .nav-item:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
-    .nav-item.active { background: #1e40af; color: white; }
-    .nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
-    .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
-    .user-name { font-weight: 600; color: #f1f5f9; font-size: 14px; }
-    .user-role-badge { display: inline-block; margin-top: 4px; font-size: 11px; background: #1e40af; color: #bfdbfe; padding: 2px 8px; border-radius: 20px; text-transform: capitalize; }
-    .logout-btn { width: 100%; padding: 8px; background: transparent; color: #64748b; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; font-size: 13px; margin-top: 12px; transition: all 0.15s; }
-    .logout-btn:hover { background: rgba(255,255,255,0.06); color: #cbd5e1; }
+    :root {
+      --bg:       #060d1a;
+      --surface:  #0c1628;
+      --card:     #111e33;
+      --elevated: #162440;
+      --border:   #1a2d4a;
+      --border2:  #243b5e;
+      --blue:     #2563eb;
+      --blue-h:   #1d4ed8;
+      --blue-dim: rgba(37,99,235,0.12);
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --dim:      #2d4a6a;
+    }
 
-    /* Main */
-    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-    .topbar { background: white; padding: 16px 32px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .page-title { font-size: 20px; font-weight: 700; color: #0f172a; }
-    .page-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
-    .content { padding: 28px 32px; flex: 1; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-    /* Stats */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
-    .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; }
-    .stat-icon { font-size: 22px; margin-bottom: 10px; }
-    .stat-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
-    .stat-value { font-size: 30px; font-weight: 800; color: #0f172a; margin-top: 6px; line-height: 1; }
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 230px;
+      background: #040a14;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
 
-    /* Sections */
+    .sidebar-logo {
+      padding: 22px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: var(--blue);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-text { font-size: 14px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #f1f5f9; }
+    .logo-sub  { font-size: 10px; color: var(--dim); letter-spacing: 0.04em; margin-top: 1px; }
+
+    .nav-group { padding: 12px 0 4px; }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0 16px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+      margin: 1px 0;
+    }
+
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+
+    .nav-item.active {
+      color: #93c5fd;
+      background: var(--blue-dim);
+      border-left-color: var(--blue);
+    }
+
+    .nav-item svg { flex-shrink: 0; opacity: 0.7; }
+    .nav-item.active svg { opacity: 1; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .user-name  { font-size: 13px; font-weight: 600; color: var(--text); }
+    .user-role  {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--blue-dim);
+      color: #93c5fd;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(37,99,235,0.3);
+    }
+
+    .logout-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.03em;
+    }
+
+    .logout-btn:hover { color: var(--text); border-color: var(--border2); background: rgba(255,255,255,0.04); }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .page-title    { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+    .page-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .content { padding: 24px 28px; flex: 1; overflow-y: auto; }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+    .stat-value { font-size: 28px; font-weight: 800; color: var(--text); margin-top: 8px; line-height: 1; letter-spacing: -1px; }
+    .stat-sub   { font-size: 11px; color: var(--dim); margin-top: 4px; }
+
+    /* ── Sections ── */
     .section { display: none; }
     .section.active { display: block; }
 
-    /* Table card */
-    .table-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; overflow: hidden; }
-    .table-header { padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
-    .table-header h3 { font-size: 15px; font-weight: 700; color: #0f172a; }
+    /* ── Table card ── */
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-header h3 { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.1px; }
+
     table { width: 100%; border-collapse: collapse; }
-    th { background: #f8fafc; padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #e2e8f0; }
-    td { padding: 13px 16px; font-size: 14px; border-bottom: 1px solid #f8fafc; color: #334155; }
+
+    th {
+      background: var(--surface);
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(26,45,74,0.6);
+      color: #94a3b8;
+    }
+
+    td strong { color: var(--text); font-weight: 600; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #fafbfc; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
 
-    /* Badges */
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: capitalize; }
-    .badge-scheduled   { background: #dbeafe; color: #1d4ed8; }
-    .badge-completed   { background: #dcfce7; color: #15803d; }
-    .badge-cancelled   { background: #fee2e2; color: #b91c1c; }
-    .badge-airworthy   { background: #dcfce7; color: #15803d; }
-    .badge-maintenance { background: #fef9c3; color: #92400e; }
-    .badge-ppl         { background: #ede9fe; color: #6d28d9; }
-    .badge-instrument  { background: #dbeafe; color: #1d4ed8; }
-    .badge-commercial  { background: #fce7f3; color: #9d174d; }
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
-    /* Buttons */
-    .btn { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
-    .btn-primary { background: #2563eb; color: white; }
-    .btn-primary:hover { background: #1d4ed8; }
-    .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-    .btn-secondary:hover { background: #e2e8f0; }
+    .badge-scheduled   { background: rgba(37,99,235,0.15);  color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
+    .badge-completed   { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+    .badge-cancelled   { background: rgba(239,68,68,0.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+    .badge-airworthy   { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+    .badge-maintenance { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+    .badge-ppl         { background: rgba(139,92,246,0.12); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.25); }
+    .badge-instrument  { background: rgba(37,99,235,0.15);  color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
+    .badge-commercial  { background: rgba(236,72,153,0.12); color: #f9a8d4; border: 1px solid rgba(236,72,153,0.25); }
 
-    /* Modal */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 100; align-items: center; justify-content: center; }
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: var(--blue-h); }
+    .btn-secondary { background: var(--elevated); color: var(--muted); border: 1px solid var(--border); }
+    .btn-secondary:hover { color: var(--text); border-color: var(--border2); }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+
     .modal-overlay.open { display: flex; }
-    .modal { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 24px; color: #0f172a; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px; }
-    .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: #1e293b; background: white; }
-    .form-group input:focus, .form-group select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
-    .form-error { color: #ef4444; font-size: 12px; margin-top: 8px; min-height: 18px; }
 
-    /* Empty state */
-    .empty-state { text-align: center; padding: 48px 20px; color: #94a3b8; }
-    .empty-icon { font-size: 40px; margin-bottom: 10px; }
-    .empty-state p { font-size: 14px; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      padding: 28px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    }
+
+    .modal h2 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 22px; letter-spacing: -0.2px; }
+
+    .form-group { margin-bottom: 14px; }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-group input::placeholder { color: var(--dim); }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+
+    .form-group select option { background: var(--surface); }
+
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+    .form-error { color: #f87171; font-size: 12px; margin-top: 8px; min-height: 18px; }
+
+    /* ── Dashboard two-col ── */
+    .dash-two-col {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) {
+      .dash-two-col { grid-template-columns: 1fr; }
+    }
+
+    /* ── Schedule timeline ── */
+    .schedule-row {
+      display: flex;
+      gap: 12px;
+      padding: 11px 20px;
+      border-bottom: 1px solid rgba(26,45,74,0.5);
+      border-left: 3px solid transparent;
+      align-items: flex-start;
+      transition: background 0.15s;
+    }
+    .schedule-row:last-child { border-bottom: none; }
+    .schedule-row:hover { background: rgba(255,255,255,0.02); }
+    .schedule-time { min-width: 46px; text-align: right; flex-shrink: 0; }
+    .schedule-time-val { font-size: 13px; font-weight: 800; color: var(--text); }
+    .schedule-time-tag { font-size: 9px; font-weight: 700; letter-spacing: 0.07em; margin-top: 2px; }
+    .schedule-info { flex: 1; }
+    .schedule-pilot { font-size: 13px; font-weight: 600; color: var(--text); }
+    .schedule-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Weather widget ── */
+    .wx-cat {
+      display: inline-block;
+      font-size: 18px;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 6px;
+      letter-spacing: 0.06em;
+      margin-bottom: 14px;
+    }
+    .wx-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(26,45,74,0.5);
+    }
+    .wx-row:last-of-type { border-bottom: none; }
+    .wx-label { color: var(--muted); font-weight: 600; }
+    .wx-val   { color: var(--text);  font-weight: 500; font-family: monospace; font-size: 12px; }
+    .wx-raw   { margin-top: 14px; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 10px; color: var(--dim); font-family: monospace; line-height: 1.6; word-break: break-all; }
+    .wx-placeholder { color: var(--dim); font-size: 13px; text-align: center; padding: 32px 0; }
+
+    /* ── Inspection cards ── */
+    .insp-card { background: var(--elevated); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+    .insp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .insp-id    { font-size: 15px; font-weight: 800; color: var(--text); }
+    .insp-model { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .insp-hobbs-val   { font-size: 15px; font-weight: 800; color: var(--text); text-align: right; }
+    .insp-hobbs-label { font-size: 10px; color: var(--muted); text-align: right; }
+    .insp-bar-wrap { margin-bottom: 10px; }
+    .insp-bar-top { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
+    .insp-bar-label { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .insp-bar-track { background: var(--border); border-radius: 4px; height: 7px; overflow: hidden; }
+    .insp-bar-fill  { height: 100%; border-radius: 4px; transition: width 0.4s; }
+    .insp-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-top: 1px solid rgba(26,45,74,0.5); }
+    .insp-row-label { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .insp-row-val   { font-weight: 600; }
+
+    /* ── Preflight form ── */
+    .pf-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+      margin: 18px 0 12px;
+    }
+    .pf-checks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+    .pf-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      transition: border-color 0.15s;
+    }
+    .pf-check:hover { border-color: var(--border2); }
+    .pf-check input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; accent-color: var(--blue); width: 15px; height: 15px; cursor: pointer; }
+    .pf-check span { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .pf-check:has(input:checked) { border-color: rgba(37,99,235,0.4); background: var(--blue-dim); }
+    .pf-check:has(input:checked) span { color: var(--text); }
+
+    .pf-determination { display: flex; flex-direction: column; gap: 8px; }
+    .pf-radio {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .pf-radio input { accent-color: var(--blue); width: 15px; height: 15px; cursor: pointer; }
+    .pf-radio-ok:has(input:checked)  { border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.08); color: #6ee7b7; }
+    .pf-radio-no:has(input:checked)  { border-color: rgba(239,68,68,0.5);  background: rgba(239,68,68,0.08);  color: #f87171; }
+    .pf-radio-ok span { color: #6ee7b7; }
+    .pf-radio-no span { color: #f87171; }
+
+    .badge-airworthy     { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+    .badge-not-airworthy { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+
+    /* ── Aircraft status cards ── */
+    .ac-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .ac-card.overdue  { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.05); }
+    .ac-card.due-soon { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.04); }
+    .ac-card.ok       { border-color: rgba(16,185,129,0.3); }
+    .ac-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .ac-card-id   { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.2px; }
+    .ac-card-model { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .ac-card-row  { display: flex; justify-content: space-between; font-size: 11px; margin-top: 6px; }
+    .ac-card-row-label { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .ac-card-row-value { color: var(--text); font-weight: 600; }
+    .ac-card-row-value.warn { color: #fcd34d; }
+    .ac-card-row-value.danger { color: #f87171; }
+
+    .badge-completed  { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+    .badge-scheduled  { background: rgba(37,99,235,0.15);  color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
+    .badge-in-progress { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+    .badge-overdue    { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--dim); }
+    .empty-icon { margin-bottom: 12px; opacity: 0.4; }
+    .empty-state p { font-size: 13px; }
   </style>
 </head>
 <body>
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <div class="sidebar-header">
-      <h1>✈️ FlightDeck</h1>
-      <span>Flight School Management</span>
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">Flight Deck</div>
+        <div class="logo-sub">Operations Management</div>
+      </div>
     </div>
 
-    <div class="nav-section">
+    <div class="nav-group">
       <div class="nav-label">Navigation</div>
+
       <div class="nav-item active" id="nav-overview" onclick="showSection('overview')">
-        <span class="icon">📊</span> Overview
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview
       </div>
+
       <div class="nav-item" id="nav-flights" onclick="showSection('flights')">
-        <span class="icon">🛫</span> Flights
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+        Flights
       </div>
+
       <div class="nav-item hide-student" id="nav-students" onclick="showSection('students')">
-        <span class="icon">🎓</span> Students
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Students
       </div>
+
       <div class="nav-item admin-only" id="nav-aircraft" onclick="showSection('aircraft')">
-        <span class="icon">✈️</span> Aircraft
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.92 12 19.79 19.79 0 0 1 1.87 3.38 2 2 0 0 1 3.84 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.1a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Aircraft
       </div>
+
       <div class="nav-item admin-only" id="nav-instructors" onclick="showSection('instructors')">
-        <span class="icon">👨‍✈️</span> Instructors
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Instructors
       </div>
+
       <div class="nav-item admin-only" id="nav-renters" onclick="showSection('renters')">
-        <span class="icon">🔑</span> Renters
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        Renters
+      </div>
+
+      <div class="nav-item" id="nav-preflight" onclick="showSection('preflight')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Preflight
+      </div>
+
+      <div class="nav-item" id="nav-maintenance" onclick="showSection('maintenance')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Maintenance
       </div>
     </div>
 
     <div class="sidebar-footer">
-      <div class="user-name" id="sidebarName">—</div>
-      <div class="user-role-badge" id="sidebarRole">—</div>
+      <div class="user-card">
+        <div class="user-name" id="sidebarName">—</div>
+        <div class="user-role" id="sidebarRole">—</div>
+      </div>
       <button class="logout-btn" onclick="logout()">Sign Out</button>
     </div>
   </div>
@@ -132,7 +547,7 @@
     <div class="topbar">
       <div>
         <div class="page-title" id="pageTitle">Overview</div>
-        <div class="page-subtitle" id="pageSubtitle">Welcome back!</div>
+        <div class="page-subtitle" id="pageSubtitle">Welcome back</div>
       </div>
     </div>
 
@@ -140,16 +555,48 @@
 
       <!-- Overview -->
       <div class="section active" id="section-overview">
+
+        <!-- Stats row -->
         <div class="stats-grid" id="statsGrid"></div>
-        <div class="table-card">
-          <div class="table-header"><h3>Recent Flights</h3></div>
-          <table>
-            <thead>
-              <tr><th>Date</th><th>Time</th><th>Pilot</th><th>Instructor</th><th>Aircraft</th><th>Status</th></tr>
-            </thead>
-            <tbody id="recentFlightsBody"></tbody>
-          </table>
+
+        <!-- Schedule + Weather -->
+        <div class="dash-two-col" style="margin-bottom:16px;">
+
+          <div class="table-card">
+            <div class="table-header">
+              <h3>Today's Schedule</h3>
+              <span id="todayDateLabel" style="font-size:12px;color:var(--muted);"></span>
+            </div>
+            <div id="todaySchedule"></div>
+
+            <!-- Upcoming flights sub-table -->
+            <div style="border-top:1px solid var(--border);padding:14px 20px 6px;">
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Upcoming — Next 7 Days</div>
+              <div id="upcomingFlights"></div>
+            </div>
+          </div>
+
+          <div class="table-card" style="display:flex;flex-direction:column;">
+            <div class="table-header">
+              <h3>Airport Weather</h3>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <input id="airportIdInput" type="text" placeholder="KXXX" maxlength="4"
+                  style="width:68px;padding:5px 8px;background:var(--elevated);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;text-transform:uppercase;outline:none;letter-spacing:0.08em;"
+                  onkeydown="if(event.key==='Enter') fetchWeather()">
+                <button onclick="fetchWeather()" class="btn btn-secondary" style="padding:5px 10px;font-size:11px;">Load</button>
+              </div>
+            </div>
+            <div id="weatherWidget" style="padding:20px;flex:1;"></div>
+          </div>
+
         </div>
+
+        <!-- Inspection status -->
+        <div class="table-card">
+          <div class="table-header"><h3>Aircraft Inspection Status</h3></div>
+          <div id="inspectionStatus" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div>
+        </div>
+
       </div>
 
       <!-- Flights -->
@@ -160,9 +607,7 @@
             <button class="btn btn-primary" id="bookFlightBtn" onclick="openModal('flight')">+ Book Flight</button>
           </div>
           <table>
-            <thead>
-              <tr><th>Date</th><th>Time</th><th>Pilot</th><th>Instructor</th><th>Aircraft</th><th>Duration</th><th>Status</th></tr>
-            </thead>
+            <thead><tr><th>Date</th><th>Time</th><th>Pilot</th><th>Instructor</th><th>Aircraft</th><th>Duration</th><th>Status</th></tr></thead>
             <tbody id="flightsBody"></tbody>
           </table>
         </div>
@@ -176,9 +621,7 @@
             <button class="btn btn-primary" onclick="openModal('student')">+ Add Student</button>
           </div>
           <table>
-            <thead>
-              <tr><th>Name</th><th>Email</th><th>Stage</th></tr>
-            </thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Stage</th></tr></thead>
             <tbody id="studentsBody"></tbody>
           </table>
         </div>
@@ -192,9 +635,7 @@
             <button class="btn btn-primary" onclick="openModal('aircraft')">+ Add Aircraft</button>
           </div>
           <table>
-            <thead>
-              <tr><th>N-Number</th><th>Model</th><th>Hobbs</th><th>Status</th></tr>
-            </thead>
+            <thead><tr><th>N-Number</th><th>Model</th><th>Hobbs</th><th>Status</th></tr></thead>
             <tbody id="aircraftBody"></tbody>
           </table>
         </div>
@@ -208,10 +649,42 @@
             <button class="btn btn-primary" onclick="openModal('instructor')">+ Add Instructor</button>
           </div>
           <table>
-            <thead>
-              <tr><th>Name</th><th>Email</th></tr>
-            </thead>
+            <thead><tr><th>Name</th><th>Email</th></tr></thead>
             <tbody id="instructorsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Preflight -->
+      <div class="section" id="section-preflight">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Preflight Assessments</h3>
+            <button class="btn btn-primary" id="startPreflightBtn" onclick="openModal('preflight')">+ Start Assessment</button>
+          </div>
+          <table>
+            <thead><tr><th>Date</th><th>Time</th><th>Student</th><th>Aircraft</th><th>Fuel L/R</th><th>Oil</th><th>Squawks</th><th>Determination</th></tr></thead>
+            <tbody id="preflightBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Maintenance -->
+      <div class="section" id="section-maintenance">
+        <div id="aircraftStatusGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px;"></div>
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Maintenance Log</h3>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <select id="maintAircraftFilter" onchange="renderMaintenance()" style="background:var(--elevated);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px 10px;font-size:12px;outline:none;">
+                <option value="">All Aircraft</option>
+              </select>
+              <button class="btn btn-primary admin-only" id="addMaintBtn" onclick="openModal('maintenance')">+ Log Entry</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Date</th><th>Aircraft</th><th>Type</th><th>Performed By</th><th>Hobbs</th><th>Next Due</th><th>Status</th></tr></thead>
+            <tbody id="maintenanceBody"></tbody>
           </table>
         </div>
       </div>
@@ -224,9 +697,7 @@
             <button class="btn btn-primary" onclick="openModal('renter')">+ Add Renter</button>
           </div>
           <table>
-            <thead>
-              <tr><th>Name</th><th>Email</th></tr>
-            </thead>
+            <thead><tr><th>Name</th><th>Email</th></tr></thead>
             <tbody id="rentersBody"></tbody>
           </table>
         </div>
@@ -235,17 +706,136 @@
     </div>
   </div>
 
-  <!-- Modal: Add Renter -->
-  <div class="modal-overlay" id="modal-renter">
-    <div class="modal">
-      <h2>🔑 Add Renter</h2>
-      <div class="form-group"><label>First Name</label><input type="text" id="rFirstName" placeholder="John"></div>
-      <div class="form-group"><label>Last Name</label><input type="text" id="rLastName" placeholder="Doe"></div>
-      <div class="form-group"><label>Email</label><input type="email" id="rEmail" placeholder="john@example.com"></div>
-      <div class="form-error" id="renterError"></div>
+  <!-- Modal: Preflight Assessment -->
+  <div class="modal-overlay" id="modal-preflight">
+    <div class="modal" style="max-width:560px;">
+      <h2>Preflight Assessment</h2>
+
+      <div id="pfNoFlight" style="display:none;padding:20px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;margin-bottom:4px;">
+        <div style="font-size:13px;font-weight:700;color:#f87171;margin-bottom:4px;">No eligible flight found</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">A preflight assessment can only be submitted within 60 minutes of your scheduled departure. Check that your flight is scheduled for today and that your departure time is within the next hour.</div>
+      </div>
+
+      <div id="pfFormContent">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Aircraft</label><select id="pfAircraft"></select></div>
+        <div class="form-group"><label>Date</label><input type="date" id="pfDate"></div>
+        <div class="form-group"><label>Time</label><input type="time" id="pfTime"></div>
+      </div>
+
+      <div class="pf-section-label">Fuel &amp; Oil</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div class="form-group"><label>Left Tank (gal)</label><input type="number" id="pfFuelLeft" placeholder="e.g. 18" step="0.5" min="0"></div>
+        <div class="form-group"><label>Right Tank (gal)</label><input type="number" id="pfFuelRight" placeholder="e.g. 18" step="0.5" min="0"></div>
+        <div class="form-group">
+          <label>Oil Level</label>
+          <select id="pfOil">
+            <option value="8qt">8 qt (Full)</option>
+            <option value="7qt">7 qt</option>
+            <option value="6qt">6 qt</option>
+            <option value="5qt">5 qt</option>
+            <option value="4qt">4 qt (Low)</option>
+            <option value="3qt">3 qt (Add)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pf-section-label">Checklist</div>
+      <div class="pf-checks">
+        <label class="pf-check"><input type="checkbox" id="pfDocuments"><span>Documents current (POH, registration, airworthiness cert)</span></label>
+        <label class="pf-check"><input type="checkbox" id="pfExterior"><span>Exterior inspection — no visible damage, fuel caps secure, prop OK</span></label>
+        <label class="pf-check"><input type="checkbox" id="pfControls"><span>Control surfaces free, correct, and full range of motion</span></label>
+        <label class="pf-check"><input type="checkbox" id="pfLanding"><span>Tires inflated, brakes adequate, no leaks</span></label>
+        <label class="pf-check"><input type="checkbox" id="pfPitot"><span>Pitot tube, static ports, and vents clear</span></label>
+        <label class="pf-check"><input type="checkbox" id="pfCockpit"><span>Cockpit instruments functional, avionics operational</span></label>
+        <label class="pf-check"><input type="checkbox" id="pfSafety"><span>Seatbelts, fire extinguisher, and ELT present</span></label>
+        <label class="pf-check"><input type="checkbox" id="pfEngine"><span>Engine area — no fluid leaks, cowling secure</span></label>
+      </div>
+
+      <div class="pf-section-label">Squawks / Discrepancies</div>
+      <div class="form-group">
+        <textarea id="pfSquawks" placeholder="Describe any issues found. Leave blank if none." style="width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);resize:vertical;min-height:72px;font-family:inherit;outline:none;"></textarea>
+      </div>
+
+      <div class="pf-section-label">Airworthiness Determination</div>
+      <div class="pf-determination">
+        <label class="pf-radio pf-radio-ok">
+          <input type="radio" name="pfAirworthy" id="pfAirworthyYes" value="true" checked>
+          <span>Aircraft is AIRWORTHY — safe to fly</span>
+        </label>
+        <label class="pf-radio pf-radio-no">
+          <input type="radio" name="pfAirworthy" id="pfAirworthyNo" value="false">
+          <span>Aircraft is NOT AIRWORTHY — do not fly</span>
+        </label>
+      </div>
+
+      <div class="pf-section-label">Student Signature</div>
+      <div class="form-group">
+        <input type="text" id="pfSignature" placeholder="Type your full name to certify this assessment">
+      </div>
+
+      </div> <!-- end pfFormContent -->
+
+      <div class="form-error" id="preflightError"></div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeModal('renter')">Cancel</button>
-        <button class="btn btn-primary" onclick="addRenter()">Add Renter</button>
+        <button class="btn btn-secondary" onclick="closeModal('preflight')">Cancel</button>
+        <button class="btn btn-primary" id="pfSubmitBtn" onclick="submitPreflight()">Submit Assessment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Log Maintenance -->
+  <div class="modal-overlay" id="modal-maintenance">
+    <div class="modal">
+      <h2>Log Maintenance Entry</h2>
+      <div class="form-group">
+        <label>Aircraft</label>
+        <select id="mAircraft"></select>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="mType">
+          <option value="Annual Inspection">Annual Inspection</option>
+          <option value="100-Hour Inspection">100-Hour Inspection</option>
+          <option value="Oil Change">Oil Change</option>
+          <option value="Avionics">Avionics</option>
+          <option value="Repair">Repair</option>
+          <option value="AD Compliance">AD Compliance</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="mDescription" placeholder="Brief description of work performed">
+      </div>
+      <div class="form-group">
+        <label>Performed By</label>
+        <input type="text" id="mPerformedBy" placeholder="Mechanic or shop name">
+      </div>
+      <div class="form-group">
+        <label>Date Performed</label>
+        <input type="date" id="mDate">
+      </div>
+      <div class="form-group">
+        <label>Hobbs at Service</label>
+        <input type="number" id="mHobbs" placeholder="e.g. 1482.3" step="0.1" min="0">
+      </div>
+      <div class="form-group">
+        <label>Next Due Date (optional)</label>
+        <input type="date" id="mNextDue">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="mStatus">
+          <option value="completed">Completed</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="in-progress">In Progress</option>
+        </select>
+      </div>
+      <div class="form-error" id="maintenanceError"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('maintenance')">Cancel</button>
+        <button class="btn btn-primary" onclick="addMaintenance()">Save Entry</button>
       </div>
     </div>
   </div>
@@ -253,7 +843,7 @@
   <!-- Modal: Book Flight -->
   <div class="modal-overlay" id="modal-flight">
     <div class="modal">
-      <h2>🛫 Book a Flight</h2>
+      <h2>Book a Flight</h2>
       <div class="form-group">
         <label>Pilot Type</label>
         <select id="fPilotType" onchange="updatePilotDropdown()">
@@ -278,7 +868,7 @@
   <!-- Modal: Add Student -->
   <div class="modal-overlay" id="modal-student">
     <div class="modal">
-      <h2>🎓 Add Student</h2>
+      <h2>Add Student</h2>
       <div class="form-group"><label>First Name</label><input type="text" id="sFirstName" placeholder="John"></div>
       <div class="form-group"><label>Last Name</label><input type="text" id="sLastName" placeholder="Doe"></div>
       <div class="form-group"><label>Email</label><input type="email" id="sEmail" placeholder="john@example.com"></div>
@@ -301,7 +891,7 @@
   <!-- Modal: Add Aircraft -->
   <div class="modal-overlay" id="modal-aircraft">
     <div class="modal">
-      <h2>✈️ Add Aircraft</h2>
+      <h2>Add Aircraft</h2>
       <div class="form-group"><label>N-Number</label><input type="text" id="aNNumber" placeholder="N12345"></div>
       <div class="form-group"><label>Model</label><input type="text" id="aModel" placeholder="Cessna 172"></div>
       <div class="form-group"><label>Hobbs Hours</label><input type="number" id="aHobbs" placeholder="1200" step="0.1" min="0"></div>
@@ -316,7 +906,7 @@
   <!-- Modal: Add Instructor -->
   <div class="modal-overlay" id="modal-instructor">
     <div class="modal">
-      <h2>👨‍✈️ Add Instructor</h2>
+      <h2>Add Instructor</h2>
       <div class="form-group"><label>First Name</label><input type="text" id="iFirstName" placeholder="Jane"></div>
       <div class="form-group"><label>Last Name</label><input type="text" id="iLastName" placeholder="Smith"></div>
       <div class="form-group"><label>Email</label><input type="email" id="iEmail" placeholder="jane@flightschool.com"></div>
@@ -328,12 +918,26 @@
     </div>
   </div>
 
+  <!-- Modal: Add Renter -->
+  <div class="modal-overlay" id="modal-renter">
+    <div class="modal">
+      <h2>Add Renter</h2>
+      <div class="form-group"><label>First Name</label><input type="text" id="rFirstName" placeholder="John"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="rLastName" placeholder="Doe"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="rEmail" placeholder="john@example.com"></div>
+      <div class="form-error" id="renterError"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('renter')">Cancel</button>
+        <button class="btn btn-primary" onclick="addRenter()">Add Renter</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API = '';
     let user = null;
-    let flights = [], students = [], aircraft = [], instructors = [], renters = [];
+    let flights = [], students = [], aircraft = [], instructors = [], renters = [], maintenance = [], preflights = [];
 
-    // ── Init ──────────────────────────────────────────
     function init() {
       const stored = localStorage.getItem('user');
       if (!stored) { window.location.href = 'LOGIN.HTML'; return; }
@@ -341,7 +945,7 @@
 
       document.getElementById('sidebarName').textContent = `${user.firstName} ${user.lastName}`;
       document.getElementById('sidebarRole').textContent = user.role;
-      document.getElementById('pageSubtitle').textContent = `Welcome back, ${user.firstName}!`;
+      document.getElementById('pageSubtitle').textContent = `Welcome back, ${user.firstName}`;
 
       applyRoleUI();
       loadAll();
@@ -361,33 +965,23 @@
     }
 
     async function loadAll() {
-      await Promise.all([fetchFlights(), fetchStudents(), fetchAircraft(), fetchInstructors(), fetchRenters()]);
+      await Promise.all([fetchFlights(), fetchStudents(), fetchAircraft(), fetchInstructors(), fetchRenters(), fetchMaintenance(), fetchPreflights()]);
       renderOverview();
     }
 
-    // ── Fetch ─────────────────────────────────────────
-    async function fetchFlights() {
-      try { const r = await fetch(`${API}/api/flights`); flights = await r.json(); } catch { flights = []; }
-    }
-    async function fetchStudents() {
-      try { const r = await fetch(`${API}/api/students`); students = await r.json(); } catch { students = []; }
-    }
-    async function fetchAircraft() {
-      try { const r = await fetch(`${API}/api/aircraft`); aircraft = await r.json(); } catch { aircraft = []; }
-    }
-    async function fetchInstructors() {
-      try { const r = await fetch(`${API}/api/instructors`); instructors = await r.json(); } catch { instructors = []; }
-    }
-    async function fetchRenters() {
-      try { const r = await fetch(`${API}/api/renters`); renters = await r.json(); } catch { renters = []; }
-    }
+    async function fetchFlights()     { try { const r = await fetch(`${API}/api/flights`);     flights     = await r.json(); } catch { flights     = []; } }
+    async function fetchStudents()    { try { const r = await fetch(`${API}/api/students`);    students    = await r.json(); } catch { students    = []; } }
+    async function fetchAircraft()    { try { const r = await fetch(`${API}/api/aircraft`);    aircraft    = await r.json(); } catch { aircraft    = []; } }
+    async function fetchInstructors() { try { const r = await fetch(`${API}/api/instructors`); instructors = await r.json(); } catch { instructors = []; } }
+    async function fetchRenters()      { try { const r = await fetch(`${API}/api/renters`);      renters      = await r.json(); } catch { renters      = []; } }
+    async function fetchMaintenance()  { try { const r = await fetch(`${API}/api/maintenance`);  maintenance  = await r.json(); } catch { maintenance  = []; } }
+    async function fetchPreflights()   { try { const r = await fetch(`${API}/api/preflight`);     preflights   = await r.json(); } catch { preflights   = []; } }
 
-    // ── Helpers ───────────────────────────────────────
     function pilotName(id) {
       const s = students.find(s => s.id === id);
       if (s) return `${s.first_name} ${s.last_name}`;
       const r = renters.find(r => r.id === id);
-      if (r) return `${r.first_name} ${r.last_name} 🔑`;
+      if (r) return `${r.first_name} ${r.last_name}`;
       return '—';
     }
     function instructorName(id) {
@@ -409,12 +1003,11 @@
       return `<span class="badge badge-${cls}">${val || '—'}</span>`;
     }
 
-    // ── Render ────────────────────────────────────────
     function flightRows(list, cols) {
-      if (!list.length) return `<tr><td colspan="${cols}"><div class="empty-state"><div class="empty-icon">🛫</div><p>No flights found</p></div></td></tr>`;
+      if (!list.length) return `<tr><td colspan="${cols}"><div class="empty-state"><div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></div><p>No flights found</p></div></td></tr>`;
       return list.map(f => `
         <tr>
-          <td>${f.date}</td>
+          <td><strong>${f.date}</strong></td>
           <td>${f.time}</td>
           <td>${pilotName(f.student_id)}</td>
           <td>${instructorName(f.instructor_id)}</td>
@@ -425,102 +1018,448 @@
     }
 
     function renderOverview() {
-      const mine = myFlights();
+      const mine  = myFlights();
       const today = new Date().toISOString().split('T')[0];
-      let stats = [];
+      let stats   = [];
 
       if (user.role === 'admin') {
+        const airworthyCount = aircraft.filter(a => a.status === 'airworthy').length;
         stats = [
-          { icon: '🛫', label: "Today's Flights", value: mine.filter(f => f.date === today).length },
-          { icon: '📅', label: 'Scheduled', value: mine.filter(f => f.status === 'scheduled').length },
-          { icon: '✈️', label: 'Aircraft', value: aircraft.length },
-          { icon: '🎓', label: 'Students', value: students.length },
-          { icon: '👨‍✈️', label: 'Instructors', value: instructors.length },
-          { icon: '🔑', label: 'Renters', value: renters.length },
+          { label: "Today's Flights", value: mine.filter(f => f.date === today).length,                           sub: 'scheduled today' },
+          { label: 'Upcoming',        value: mine.filter(f => f.status === 'scheduled' && f.date >= today).length, sub: 'total scheduled' },
+          { label: 'Fleet',           value: `${airworthyCount}/${aircraft.length}`,                              sub: 'airworthy' },
+          { label: 'Students',        value: students.length,                                                      sub: 'enrolled' },
+          { label: 'Instructors',     value: instructors.length,                                                   sub: 'on staff' },
+          { label: 'Renters',         value: renters.length,                                                       sub: 'active' },
         ];
       } else if (user.role === 'instructor') {
         const myStudentIds = [...new Set(mine.map(f => f.student_id))];
         stats = [
-          { icon: '🛫', label: "Today's Flights", value: mine.filter(f => f.date === today).length },
-          { icon: '📅', label: 'Scheduled', value: mine.filter(f => f.status === 'scheduled').length },
-          { icon: '🎓', label: 'My Students', value: myStudentIds.length },
-          { icon: '⏱️', label: 'Total Hours', value: mine.reduce((s, f) => s + (f.duration || 0), 0) + 'h' },
+          { label: "Today's Flights", value: mine.filter(f => f.date === today).length,                           sub: 'today' },
+          { label: 'Upcoming',        value: mine.filter(f => f.status === 'scheduled' && f.date >= today).length, sub: 'scheduled' },
+          { label: 'My Students',     value: myStudentIds.length,                                                  sub: 'assigned' },
+          { label: 'Hours Logged',    value: mine.filter(f=>f.status==='completed').reduce((s,f)=>s+(f.duration||0),0)+'h', sub: 'completed' },
         ];
       } else {
         stats = [
-          { icon: '🛫', label: "Today's Flights", value: mine.filter(f => f.date === today).length },
-          { icon: '📅', label: 'Upcoming', value: mine.filter(f => f.status === 'scheduled').length },
-          { icon: '⏱️', label: 'Logged Hours', value: mine.filter(f => f.status === 'completed').reduce((s, f) => s + (f.duration || 0), 0) + 'h' },
+          { label: "Today's Flights", value: mine.filter(f => f.date === today).length,                            sub: 'today' },
+          { label: 'Upcoming',        value: mine.filter(f => f.status === 'scheduled' && f.date >= today).length,  sub: 'scheduled' },
+          { label: 'Hours Logged',    value: mine.filter(f=>f.status==='completed').reduce((s,f)=>s+(f.duration||0),0)+'h', sub: 'completed' },
         ];
       }
 
       document.getElementById('statsGrid').innerHTML = stats.map(s => `
         <div class="stat-card">
-          <div class="stat-icon">${s.icon}</div>
           <div class="stat-label">${s.label}</div>
           <div class="stat-value">${s.value}</div>
+          <div class="stat-sub">${s.sub}</div>
         </div>`).join('');
 
-      const recent = [...mine].sort((a, b) => (b.date > a.date ? 1 : -1)).slice(0, 8);
-      document.getElementById('recentFlightsBody').innerHTML = flightRows(recent, 6);
+      renderTodaySchedule();
+      renderUpcomingFlights();
+      renderInspectionStatus();
+
+      // Restore saved airport and load weather
+      const saved = localStorage.getItem('airportId');
+      if (saved) {
+        document.getElementById('airportIdInput').value = saved;
+        fetchWeather();
+      } else {
+        document.getElementById('weatherWidget').innerHTML =
+          '<div class="wx-placeholder">Enter an airport identifier<br>above to load METAR data.</div>';
+      }
+    }
+
+    // ── Today's schedule ──────────────────────────────
+    function renderTodaySchedule() {
+      const today   = new Date().toISOString().split('T')[0];
+      const nowMin  = new Date().getHours() * 60 + new Date().getMinutes();
+      const mine    = myFlights();
+      const todayFs = mine.filter(f => f.date === today).sort((a,b) => a.time > b.time ? 1 : -1);
+
+      document.getElementById('todayDateLabel').textContent =
+        new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+
+      const el = document.getElementById('todaySchedule');
+      if (!todayFs.length) {
+        el.innerHTML = '<div style="padding:24px 20px;color:var(--dim);font-size:13px;">No flights scheduled today.</div>';
+        return;
+      }
+
+      el.innerHTML = todayFs.map(f => {
+        const [h, m] = (f.time || '00:00').split(':').map(Number);
+        const diff   = (h * 60 + m) - nowMin;
+        let borderColor = 'var(--border)';
+        let tag = '';
+
+        if (f.status === 'cancelled') {
+          borderColor = 'var(--dim)';
+          tag = `<div class="schedule-time-tag" style="color:var(--dim);">CANCELLED</div>`;
+        } else if (diff >= -90 && diff <= 0) {
+          borderColor = '#6ee7b7';
+          tag = `<div class="schedule-time-tag" style="color:#6ee7b7;">IN PROGRESS</div>`;
+        } else if (diff > 0 && diff <= 60) {
+          borderColor = '#fcd34d';
+          tag = `<div class="schedule-time-tag" style="color:#fcd34d;">IN ${diff}MIN</div>`;
+        } else if (diff < -90) {
+          borderColor = 'var(--dim)';
+          tag = `<div class="schedule-time-tag" style="color:var(--dim);">PAST</div>`;
+        }
+
+        const instructor = f.instructor_id ? ` &middot; ${instructorName(f.instructor_id)}` : '';
+        const duration   = f.duration ? ` &middot; ${f.duration}h` : '';
+
+        return `
+          <div class="schedule-row" style="border-left-color:${borderColor};">
+            <div class="schedule-time">
+              <div class="schedule-time-val">${f.time}</div>
+              ${tag}
+            </div>
+            <div class="schedule-info">
+              <div class="schedule-pilot">${pilotName(f.student_id)}</div>
+              <div class="schedule-detail">${aircraftLabel(f.aircraft_id)}${instructor}${duration}</div>
+            </div>
+            ${badge(f.status)}
+          </div>`;
+      }).join('');
+    }
+
+    // ── Upcoming flights (next 7 days) ────────────────
+    function renderUpcomingFlights() {
+      const today   = new Date().toISOString().split('T')[0];
+      const in7days = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+      const upcoming = myFlights()
+        .filter(f => f.date > today && f.date <= in7days && f.status === 'scheduled')
+        .sort((a,b) => a.date > b.date || (a.date === b.date && a.time > b.time) ? 1 : -1)
+        .slice(0, 8);
+
+      const el = document.getElementById('upcomingFlights');
+      if (!upcoming.length) {
+        el.innerHTML = '<div style="color:var(--dim);font-size:12px;padding-bottom:8px;">No upcoming flights in the next 7 days.</div>';
+        return;
+      }
+
+      el.innerHTML = upcoming.map(f => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(26,45,74,0.4);">
+          <div>
+            <span style="font-size:12px;font-weight:700;color:var(--text);">${f.date}</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px;">${f.time}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);text-align:right;">
+            ${pilotName(f.student_id)} &middot; ${aircraftLabel(f.aircraft_id)}
+          </div>
+        </div>`).join('') + '<div style="padding-bottom:4px;"></div>';
+    }
+
+    // ── Aircraft inspection status ────────────────────
+    function renderInspectionStatus() {
+      const today = new Date();
+      const el    = document.getElementById('inspectionStatus');
+
+      if (!aircraft.length) {
+        el.innerHTML = '<div style="color:var(--dim);font-size:13px;">No aircraft in fleet yet.</div>';
+        return;
+      }
+
+      el.innerHTML = aircraft.map(a => {
+        const logs        = maintenance.filter(m => m.aircraft_id === a.id);
+        const currentHobbs = parseFloat(a.hobbs) || 0;
+
+        // 100-Hour
+        const hundredLogs = logs
+          .filter(m => m.type === '100-Hour Inspection' && m.hobbs_at_service != null)
+          .sort((x,y) => y.hobbs_at_service - x.hobbs_at_service);
+        const last100 = hundredLogs[0];
+        let hundredHtml;
+        if (last100) {
+          const since   = currentHobbs - last100.hobbs_at_service;
+          const left    = 100 - since;
+          const pct     = Math.min(Math.max(since / 100 * 100, 0), 100);
+          const color   = left < 10 ? '#f87171' : left < 25 ? '#fcd34d' : '#6ee7b7';
+          hundredHtml = `
+            <div class="insp-bar-wrap">
+              <div class="insp-bar-top">
+                <span class="insp-bar-label">100-Hour</span>
+                <span style="font-weight:700;color:${color};font-size:11px;">${left.toFixed(1)}h remaining</span>
+              </div>
+              <div class="insp-bar-track">
+                <div class="insp-bar-fill" style="width:${pct}%;background:${color};"></div>
+              </div>
+            </div>`;
+        } else {
+          const left  = 100 - (currentHobbs % 100);
+          const pct   = (currentHobbs % 100);
+          const color = left < 10 ? '#f87171' : left < 25 ? '#fcd34d' : '#6ee7b7';
+          hundredHtml = `
+            <div class="insp-bar-wrap">
+              <div class="insp-bar-top">
+                <span class="insp-bar-label">100-Hour</span>
+                <span style="font-weight:700;color:${color};font-size:11px;">~${left.toFixed(0)}h remaining</span>
+              </div>
+              <div class="insp-bar-track">
+                <div class="insp-bar-fill" style="width:${pct}%;background:${color};"></div>
+              </div>
+            </div>`;
+        }
+
+        // Annual inspection
+        const annualLogs = logs
+          .filter(m => m.type === 'Annual Inspection' && m.next_due)
+          .sort((x,y) => x.next_due > y.next_due ? 1 : -1);
+        const lastAnnual = annualLogs[0];
+        let annualHtml = '';
+        if (lastAnnual) {
+          const daysLeft = Math.ceil((new Date(lastAnnual.next_due) - today) / 86400000);
+          const color    = daysLeft < 0 ? '#f87171' : daysLeft < 30 ? '#fcd34d' : '#6ee7b7';
+          const label    = daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d until ${lastAnnual.next_due}`;
+          annualHtml = `<div class="insp-row"><span class="insp-row-label">Annual</span><span class="insp-row-val" style="color:${color};">${label}</span></div>`;
+        } else {
+          annualHtml = `<div class="insp-row"><span class="insp-row-label">Annual</span><span class="insp-row-val" style="color:var(--dim);">No record</span></div>`;
+        }
+
+        // Oil change
+        const oilLogs = logs.filter(m => m.type === 'Oil Change').sort((x,y) => y.date > x.date ? 1 : -1);
+        const lastOil = oilLogs[0];
+        const oilHtml = `<div class="insp-row"><span class="insp-row-label">Last Oil Change</span><span class="insp-row-val" style="color:var(--text);">${lastOil ? lastOil.date : '—'}</span></div>`;
+
+        // Any other upcoming due items
+        const nextDueItems = logs
+          .filter(m => m.next_due && m.next_due > today.toISOString().split('T')[0])
+          .sort((x,y) => x.next_due > y.next_due ? 1 : -1);
+        const nextDue = nextDueItems[0];
+        const nextDueHtml = nextDue && nextDue.type !== 'Annual Inspection'
+          ? `<div class="insp-row"><span class="insp-row-label">Next Due</span><span class="insp-row-val" style="color:var(--muted);">${nextDue.type} &middot; ${nextDue.next_due}</span></div>`
+          : '';
+
+        return `
+          <div class="insp-card">
+            <div class="insp-header">
+              <div>
+                <div class="insp-id">${a.n_number}</div>
+                <div class="insp-model">${a.model}</div>
+              </div>
+              <div>
+                <div class="insp-hobbs-val">${currentHobbs}h</div>
+                <div class="insp-hobbs-label">Hobbs</div>
+              </div>
+            </div>
+            ${hundredHtml}
+            ${annualHtml}
+            ${oilHtml}
+            ${nextDueHtml}
+          </div>`;
+      }).join('');
+    }
+
+    // ── Weather ───────────────────────────────────────
+    async function fetchWeather() {
+      const id = document.getElementById('airportIdInput').value.trim().toUpperCase();
+      if (!id || id.length < 3) return;
+      localStorage.setItem('airportId', id);
+
+      const widget = document.getElementById('weatherWidget');
+      widget.innerHTML = '<div class="wx-placeholder">Loading METAR...</div>';
+
+      try {
+        const res  = await fetch(`https://aviationweather.gov/api/data/metar?ids=${id}&format=json`);
+        const data = await res.json();
+
+        if (!data || !data.length) {
+          widget.innerHTML = '<div class="wx-placeholder" style="color:#f87171;">Airport not found.<br>Check the identifier and try again.</div>';
+          return;
+        }
+        renderWeather(data[0]);
+      } catch (e) {
+        widget.innerHTML = '<div class="wx-placeholder" style="color:#f87171;">Could not load weather.<br>Check your connection.</div>';
+      }
+    }
+
+    function renderWeather(m) {
+      const catColors = { VFR:'#6ee7b7', MVFR:'#93c5fd', IFR:'#f87171', LIFR:'#f0abfc' };
+      const catBgs    = { VFR:'rgba(16,185,129,0.12)', MVFR:'rgba(37,99,235,0.12)', IFR:'rgba(239,68,68,0.12)', LIFR:'rgba(217,70,239,0.12)' };
+      const cat       = m.fltcat || 'VFR';
+      const catColor  = catColors[cat] || '#94a3b8';
+      const catBg     = catBgs[cat]    || 'transparent';
+
+      const wind = (!m.wspd || m.wspd === 0)
+        ? 'Calm'
+        : `${String(m.wdir || 0).padStart(3,'0')}° @ ${m.wspd}kt${m.wgst ? ' G' + m.wgst + 'kt' : ''}`;
+
+      const vis    = m.visib  ? `${m.visib} SM`          : '—';
+      const temp   = m.temp  != null ? `${m.temp}°C`     : '—';
+      const dewp   = m.dewp  != null ? `${m.dewp}°C`     : '—';
+      const altim  = m.altim != null ? `${parseFloat(m.altim).toFixed(2)}" Hg` : '—';
+      const sky    = (m.clouds||[]).map(c=>`${c.cover} @ ${Number(c.base).toLocaleString()}'`).join('  ') || 'Clear';
+      const obs    = m.obsTime ? new Date(m.obsTime*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+
+      document.getElementById('weatherWidget').innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div class="wx-cat" style="background:${catBg};border:1px solid ${catColor};color:${catColor};">${cat}</div>
+          <div>
+            <div style="font-size:14px;font-weight:800;color:var(--text);">${m.icaoId || ''}</div>
+            <div style="font-size:11px;color:var(--muted);">${m.name || ''}</div>
+            ${obs ? `<div style="font-size:10px;color:var(--dim);margin-top:2px;">Observed ${obs}</div>` : ''}
+          </div>
+        </div>
+        <div class="wx-row"><span class="wx-label">Wind</span><span class="wx-val">${wind}</span></div>
+        <div class="wx-row"><span class="wx-label">Visibility</span><span class="wx-val">${vis}</span></div>
+        <div class="wx-row"><span class="wx-label">Sky</span><span class="wx-val">${sky}</span></div>
+        <div class="wx-row"><span class="wx-label">Temp / Dew</span><span class="wx-val">${temp} / ${dewp}</span></div>
+        <div class="wx-row"><span class="wx-label">Altimeter</span><span class="wx-val">${altim}</span></div>
+        ${m.wxString ? `<div class="wx-row"><span class="wx-label">Wx</span><span class="wx-val">${m.wxString}</span></div>` : ''}
+        <div class="wx-raw">${m.rawOb || m.metar || '—'}</div>`;
     }
 
     function renderFlights() {
       document.getElementById('flightsBody').innerHTML = flightRows(
-        [...myFlights()].sort((a, b) => (b.date > a.date ? 1 : -1)), 7
+        [...myFlights()].sort((a, b) => b.date > a.date ? 1 : -1), 7
       );
     }
 
     function renderStudents() {
       const tbody = document.getElementById('studentsBody');
-      if (!students.length) {
-        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🎓</div><p>No students yet</p></div></td></tr>`;
-        return;
-      }
-      tbody.innerHTML = students.map(s => `
-        <tr>
-          <td>${s.first_name} ${s.last_name}</td>
-          <td>${s.email || '—'}</td>
-          <td>${badge(s.stage)}</td>
-        </tr>`).join('');
+      if (!students.length) { tbody.innerHTML = emptyRow(3, 'No students yet'); return; }
+      tbody.innerHTML = students.map(s => `<tr><td><strong>${s.first_name} ${s.last_name}</strong></td><td>${s.email || '—'}</td><td>${badge(s.stage)}</td></tr>`).join('');
     }
 
     function renderAircraft() {
       const tbody = document.getElementById('aircraftBody');
-      if (!aircraft.length) {
-        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">✈️</div><p>No aircraft yet</p></div></td></tr>`;
-        return;
-      }
-      tbody.innerHTML = aircraft.map(a => `
-        <tr>
-          <td><strong>${a.n_number}</strong></td>
-          <td>${a.model}</td>
-          <td>${a.hobbs}h</td>
-          <td>${badge(a.status)}</td>
-        </tr>`).join('');
+      if (!aircraft.length) { tbody.innerHTML = emptyRow(4, 'No aircraft yet'); return; }
+      tbody.innerHTML = aircraft.map(a => `<tr><td><strong>${a.n_number}</strong></td><td>${a.model}</td><td>${a.hobbs}h</td><td>${badge(a.status)}</td></tr>`).join('');
     }
 
     function renderInstructors() {
       const tbody = document.getElementById('instructorsBody');
-      if (!instructors.length) {
-        tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">👨‍✈️</div><p>No instructors yet</p></div></td></tr>`;
-        return;
-      }
-      tbody.innerHTML = instructors.map(i => `
-        <tr>
-          <td>${i.first_name} ${i.last_name}</td>
-          <td>${i.email || '—'}</td>
-        </tr>`).join('');
+      if (!instructors.length) { tbody.innerHTML = emptyRow(2, 'No instructors yet'); return; }
+      tbody.innerHTML = instructors.map(i => `<tr><td><strong>${i.first_name} ${i.last_name}</strong></td><td>${i.email || '—'}</td></tr>`).join('');
     }
 
-    // ── Navigation ────────────────────────────────────
+    function renderRenters() {
+      const tbody = document.getElementById('rentersBody');
+      if (!renters.length) { tbody.innerHTML = emptyRow(2, 'No renters yet'); return; }
+      tbody.innerHTML = renters.map(r => `<tr><td><strong>${r.first_name} ${r.last_name}</strong></td><td>${r.email || '—'}</td></tr>`).join('');
+    }
+
+    function emptyRow(cols, msg) {
+      return `<tr><td colspan="${cols}"><div class="empty-state"><p>${msg}</p></div></td></tr>`;
+    }
+
+    function renderAircraftStatusCards() {
+      const today = new Date();
+      const grid  = document.getElementById('aircraftStatusGrid');
+
+      // Populate filter dropdown
+      const filter = document.getElementById('maintAircraftFilter');
+      const prev   = filter.value;
+      filter.innerHTML = '<option value="">All Aircraft</option>' +
+        aircraft.map(a => `<option value="${a.id}" ${a.id === prev ? 'selected' : ''}>${a.n_number} — ${a.model}</option>`).join('');
+
+      grid.innerHTML = aircraft.map(a => {
+        const logs    = maintenance.filter(m => m.aircraft_id === a.id);
+        const last    = logs.find(m => m.status === 'completed');
+        const nextRec = logs.filter(m => m.next_due).sort((x, y) => x.next_due > y.next_due ? 1 : -1)[0];
+
+        let cardClass = 'ok', dueTxt = '—', dueClass = '';
+        if (nextRec) {
+          const dueDate = new Date(nextRec.next_due);
+          const daysOut = Math.ceil((dueDate - today) / 86400000);
+          dueTxt = nextRec.next_due;
+          if (daysOut < 0)  { cardClass = 'overdue';  dueClass = 'danger'; }
+          else if (daysOut <= 30) { cardClass = 'due-soon'; dueClass = 'warn'; }
+        }
+
+        return `
+          <div class="ac-card ${cardClass}">
+            <div class="ac-card-header">
+              <div>
+                <div class="ac-card-id">${a.n_number}</div>
+                <div class="ac-card-model">${a.model}</div>
+              </div>
+              ${badge(a.status)}
+            </div>
+            <div class="ac-card-row">
+              <span class="ac-card-row-label">Last Service</span>
+              <span class="ac-card-row-value">${last ? last.date : '—'}</span>
+            </div>
+            <div class="ac-card-row">
+              <span class="ac-card-row-label">Next Due</span>
+              <span class="ac-card-row-value ${dueClass}">${dueTxt}</span>
+            </div>
+            <div class="ac-card-row">
+              <span class="ac-card-row-label">Log Entries</span>
+              <span class="ac-card-row-value">${logs.length}</span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderMaintenance() {
+      renderAircraftStatusCards();
+      const filterVal = document.getElementById('maintAircraftFilter').value;
+      const list = filterVal
+        ? maintenance.filter(m => m.aircraft_id === filterVal)
+        : maintenance;
+
+      const tbody = document.getElementById('maintenanceBody');
+      if (!list.length) { tbody.innerHTML = emptyRow(7, 'No maintenance entries yet'); return; }
+
+      tbody.innerHTML = list.map(m => {
+        const today   = new Date();
+        const isOverdue = m.next_due && m.status !== 'completed' && new Date(m.next_due) < today;
+        const statusVal = isOverdue ? 'overdue' : m.status;
+        return `
+          <tr>
+            <td><strong>${m.date}</strong></td>
+            <td>${aircraftLabel(m.aircraft_id)}</td>
+            <td>${m.type}</td>
+            <td>${m.performed_by || '—'}</td>
+            <td>${m.hobbs_at_service != null ? m.hobbs_at_service + 'h' : '—'}</td>
+            <td>${m.next_due || '—'}</td>
+            <td>${badge(statusVal)}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    function renderPreflight() {
+      const list = user.role === 'student'
+        ? preflights.filter(p => p.student_id === user.id)
+        : user.role === 'instructor'
+          ? preflights.filter(p => flights.some(f => f.instructor_id === user.id && f.student_id === p.student_id))
+          : preflights;
+
+      const tbody = document.getElementById('preflightBody');
+      if (!list.length) { tbody.innerHTML = emptyRow(8, 'No preflight assessments yet'); return; }
+
+      tbody.innerHTML = list.map(p => {
+        const airworthyBadge = p.airworthy
+          ? '<span class="badge badge-airworthy">Airworthy</span>'
+          : '<span class="badge badge-not-airworthy">Not Airworthy</span>';
+        const fuel = (p.fuel_left != null && p.fuel_right != null)
+          ? `${p.fuel_left} / ${p.fuel_right} gal`
+          : '—';
+        return `
+          <tr>
+            <td><strong>${p.date}</strong></td>
+            <td>${p.time || '—'}</td>
+            <td>${p.student_name || pilotName(p.student_id)}</td>
+            <td>${aircraftLabel(p.aircraft_id)}</td>
+            <td>${fuel}</td>
+            <td>${p.oil_level || '—'}</td>
+            <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.squawks || '<span style="color:var(--dim)">None</span>'}</td>
+            <td>${airworthyBadge}</td>
+          </tr>`;
+      }).join('');
+    }
+
     const sections = {
-      overview:    { title: 'Overview',    subtitle: 'Your flight school at a glance' },
-      flights:     { title: 'Flights',     subtitle: 'View and manage all flights' },
-      students:    { title: 'Students',    subtitle: 'Manage the student roster' },
-      aircraft:    { title: 'Aircraft',    subtitle: 'Fleet management' },
-      instructors: { title: 'Instructors', subtitle: 'Instructor roster' },
-      renters:     { title: 'Renters',     subtitle: 'Manage aircraft renters' },
+      overview:     { title: 'Overview',     subtitle: 'Flight school at a glance' },
+      flights:      { title: 'Flights',      subtitle: 'View and manage all flights' },
+      students:     { title: 'Students',     subtitle: 'Student roster' },
+      aircraft:     { title: 'Aircraft',     subtitle: 'Fleet management' },
+      instructors:  { title: 'Instructors',  subtitle: 'Instructor roster' },
+      renters:      { title: 'Renters',      subtitle: 'Aircraft renters' },
+      maintenance:  { title: 'Maintenance',  subtitle: 'Aircraft maintenance log' },
+      preflight:    { title: 'Preflight',    subtitle: 'Pre-flight assessment records' },
     };
 
     function showSection(name) {
@@ -535,22 +1474,10 @@
       if (name === 'aircraft')    renderAircraft();
       if (name === 'instructors') renderInstructors();
       if (name === 'renters')     renderRenters();
+      if (name === 'maintenance') renderMaintenance();
+      if (name === 'preflight')   renderPreflight();
     }
 
-    function renderRenters() {
-      const tbody = document.getElementById('rentersBody');
-      if (!renters.length) {
-        tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">🔑</div><p>No renters yet</p></div></td></tr>`;
-        return;
-      }
-      tbody.innerHTML = renters.map(r => `
-        <tr>
-          <td>${r.first_name} ${r.last_name}</td>
-          <td>${r.email || '—'}</td>
-        </tr>`).join('');
-    }
-
-    // ── Modals ────────────────────────────────────────
     function updatePilotDropdown() {
       const type = document.getElementById('fPilotType').value;
       document.getElementById('fPilotLabel').textContent = type === 'renter' ? 'Renter' : 'Student';
@@ -560,14 +1487,68 @@
     }
 
     function openModal(type) {
+      if (type === 'preflight') {
+        const now     = new Date();
+        const today   = now.toISOString().split('T')[0];
+        const nowMin  = now.getHours() * 60 + now.getMinutes();
+
+        // Find flights scheduled today within window: up to 15 min past or 60 min ahead
+        const eligible = flights.filter(f => {
+          if (f.status !== 'scheduled' || f.date !== today) return false;
+          const isMyFlight = user.role === 'admin' || f.student_id === user.id;
+          if (!isMyFlight) return false;
+          const [h, m] = (f.time || '00:00').split(':').map(Number);
+          const diff = (h * 60 + m) - nowMin;
+          return diff >= -15 && diff <= 60;
+        });
+
+        const noFlightEl  = document.getElementById('pfNoFlight');
+        const formEl      = document.getElementById('pfFormContent');
+        const submitBtn   = document.getElementById('pfSubmitBtn');
+
+        if (eligible.length === 0) {
+          noFlightEl.style.display = 'block';
+          formEl.style.display     = 'none';
+          submitBtn.disabled       = true;
+          submitBtn.style.opacity  = '0.4';
+        } else {
+          noFlightEl.style.display = 'none';
+          formEl.style.display     = '';
+          submitBtn.disabled       = false;
+          submitBtn.style.opacity  = '';
+
+          // Only show aircraft from eligible flights
+          const seen = new Set();
+          document.getElementById('pfAircraft').innerHTML = eligible
+            .filter(f => { if (seen.has(f.aircraft_id)) return false; seen.add(f.aircraft_id); return true; })
+            .map(f => {
+              const a = aircraft.find(a => a.id === f.aircraft_id);
+              return a ? `<option value="${a.id}">${a.n_number} — ${a.model} (${f.time})</option>` : '';
+            }).filter(Boolean).join('');
+
+          document.getElementById('pfDate').value = today;
+          document.getElementById('pfTime').value = now.toTimeString().slice(0, 5);
+          document.getElementById('pfSignature').value = `${user.firstName} ${user.lastName}`;
+          ['pfDocuments','pfExterior','pfControls','pfLanding','pfPitot','pfCockpit','pfSafety','pfEngine']
+            .forEach(id => document.getElementById(id).checked = false);
+          document.getElementById('pfSquawks').value = '';
+          document.getElementById('pfAirworthyYes').checked = true;
+        }
+        document.getElementById('preflightError').textContent = '';
+      }
+      if (type === 'maintenance') {
+        document.getElementById('mAircraft').innerHTML =
+          aircraft.map(a => `<option value="${a.id}">${a.n_number} — ${a.model}</option>`).join('');
+        document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+      }
       if (type === 'flight') {
         document.getElementById('fPilotType').value = 'student';
         updatePilotDropdown();
         document.getElementById('fInstructor').innerHTML =
-          '<option value="">— No instructor —</option>' +
+          '<option value="">No instructor</option>' +
           instructors.map(i => `<option value="${i.id}">${i.first_name} ${i.last_name}</option>`).join('');
         document.getElementById('fAircraft').innerHTML =
-          aircraft.map(a => `<option value="${a.id}">${a.n_number} – ${a.model}</option>`).join('');
+          aircraft.map(a => `<option value="${a.id}">${a.n_number} — ${a.model}</option>`).join('');
         document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
       }
       document.getElementById(`modal-${type}`).classList.add('open');
@@ -575,15 +1556,14 @@
 
     function closeModal(type) {
       document.getElementById(`modal-${type}`).classList.remove('open');
-      const errEl = document.getElementById(`${type}Error`);
-      if (errEl) errEl.textContent = '';
+      const e = document.getElementById(`${type}Error`);
+      if (e) e.textContent = '';
     }
 
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+      o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
     });
 
-    // ── Actions ───────────────────────────────────────
     async function bookFlight() {
       const studentId    = document.getElementById('fPilot').value;
       const instructorId = document.getElementById('fInstructor').value || null;
@@ -591,48 +1571,11 @@
       const date         = document.getElementById('fDate').value;
       const time         = document.getElementById('fTime').value;
       const duration     = parseFloat(document.getElementById('fDuration').value);
-
-      if (!studentId || !aircraftId || !date || !time) {
-        document.getElementById('flightError').textContent = 'Please fill in all required fields.';
-        return;
-      }
-
-      const res = await fetch(`${API}/api/flights`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, instructorId, aircraftId, date, time, duration })
-      });
+      if (!studentId || !aircraftId || !date || !time) { document.getElementById('flightError').textContent = 'Please fill in all required fields.'; return; }
+      const res = await fetch(`${API}/api/flights`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentId, instructorId, aircraftId, date, time, duration }) });
       const data = await res.json();
       if (!res.ok) { document.getElementById('flightError').textContent = data.error; return; }
-
-      flights.push(data);
-      closeModal('flight');
-      renderFlights();
-      renderOverview();
-    }
-
-    async function addRenter() {
-      const firstName = document.getElementById('rFirstName').value.trim();
-      const lastName  = document.getElementById('rLastName').value.trim();
-      const email     = document.getElementById('rEmail').value.trim();
-
-      if (!firstName || !lastName || !email) {
-        document.getElementById('renterError').textContent = 'Please fill in all fields.';
-        return;
-      }
-
-      const res = await fetch(`${API}/api/renters`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, email })
-      });
-      const data = await res.json();
-      if (!res.ok) { document.getElementById('renterError').textContent = data.error; return; }
-
-      renters.push(data);
-      closeModal('renter');
-      renderRenters();
-      renderOverview();
+      flights.push(data); closeModal('flight'); renderFlights(); renderOverview();
     }
 
     async function addStudent() {
@@ -640,72 +1583,110 @@
       const lastName  = document.getElementById('sLastName').value.trim();
       const email     = document.getElementById('sEmail').value.trim();
       const stage     = document.getElementById('sStage').value;
-
-      if (!firstName || !lastName || !email) {
-        document.getElementById('studentError').textContent = 'Please fill in all fields.';
-        return;
-      }
-
-      const res = await fetch(`${API}/api/students`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, email, stage })
-      });
+      if (!firstName || !lastName || !email) { document.getElementById('studentError').textContent = 'Please fill in all fields.'; return; }
+      const res = await fetch(`${API}/api/students`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email, stage }) });
       const data = await res.json();
       if (!res.ok) { document.getElementById('studentError').textContent = data.error; return; }
-
-      students.push(data);
-      closeModal('student');
-      renderStudents();
-      renderOverview();
+      students.push(data); closeModal('student'); renderStudents(); renderOverview();
     }
 
     async function addAircraft() {
       const nNumber = document.getElementById('aNNumber').value.trim();
       const model   = document.getElementById('aModel').value.trim();
       const hobbs   = parseFloat(document.getElementById('aHobbs').value) || 0;
-
-      if (!nNumber || !model) {
-        document.getElementById('aircraftError').textContent = 'N-Number and model are required.';
-        return;
-      }
-
-      const res = await fetch(`${API}/api/aircraft`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nNumber, model, hobbs })
-      });
+      if (!nNumber || !model) { document.getElementById('aircraftError').textContent = 'N-Number and model are required.'; return; }
+      const res = await fetch(`${API}/api/aircraft`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nNumber, model, hobbs }) });
       const data = await res.json();
       if (!res.ok) { document.getElementById('aircraftError').textContent = data.error; return; }
-
-      aircraft.push(data);
-      closeModal('aircraft');
-      renderAircraft();
-      renderOverview();
+      aircraft.push(data); closeModal('aircraft'); renderAircraft(); renderOverview();
     }
 
     async function addInstructor() {
       const firstName = document.getElementById('iFirstName').value.trim();
       const lastName  = document.getElementById('iLastName').value.trim();
       const email     = document.getElementById('iEmail').value.trim();
+      if (!firstName || !lastName || !email) { document.getElementById('instructorError').textContent = 'Please fill in all fields.'; return; }
+      const res = await fetch(`${API}/api/instructors`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email }) });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('instructorError').textContent = data.error; return; }
+      instructors.push(data); closeModal('instructor'); renderInstructors(); renderOverview();
+    }
 
-      if (!firstName || !lastName || !email) {
-        document.getElementById('instructorError').textContent = 'Please fill in all fields.';
+    async function submitPreflight() {
+      const aircraftId   = document.getElementById('pfAircraft').value;
+      const date         = document.getElementById('pfDate').value;
+      const time         = document.getElementById('pfTime').value;
+      const fuelLeft     = document.getElementById('pfFuelLeft').value;
+      const fuelRight    = document.getElementById('pfFuelRight').value;
+      const oilLevel     = document.getElementById('pfOil').value;
+      const documentsOk  = document.getElementById('pfDocuments').checked;
+      const exteriorOk   = document.getElementById('pfExterior').checked;
+      const cockpitOk    = document.getElementById('pfCockpit').checked;
+      const engineOk     = document.getElementById('pfEngine').checked;
+      const squawks      = document.getElementById('pfSquawks').value.trim();
+      const airworthy    = document.getElementById('pfAirworthyYes').checked;
+      const studentName  = document.getElementById('pfSignature').value.trim();
+
+      if (!aircraftId || !date || !studentName) {
+        document.getElementById('preflightError').textContent = 'Aircraft, date, and signature are required.';
         return;
       }
 
-      const res = await fetch(`${API}/api/instructors`, {
+      const res = await fetch(`${API}/api/preflight`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, email })
+        body: JSON.stringify({
+          studentId: user.id, aircraftId, date, time,
+          fuelLeft, fuelRight, oilLevel,
+          documentsOk, exteriorOk, cockpitOk, engineOk,
+          squawks, airworthy, studentName
+        })
       });
       const data = await res.json();
-      if (!res.ok) { document.getElementById('instructorError').textContent = data.error; return; }
+      if (!res.ok) { document.getElementById('preflightError').textContent = data.error; return; }
 
-      instructors.push(data);
-      closeModal('instructor');
-      renderInstructors();
-      renderOverview();
+      preflights.unshift(data);
+      closeModal('preflight');
+      renderPreflight();
+    }
+
+    async function addMaintenance() {
+      const aircraftId    = document.getElementById('mAircraft').value;
+      const type          = document.getElementById('mType').value;
+      const description   = document.getElementById('mDescription').value.trim();
+      const performedBy   = document.getElementById('mPerformedBy').value.trim();
+      const date          = document.getElementById('mDate').value;
+      const hobbsAtService = document.getElementById('mHobbs').value;
+      const nextDue       = document.getElementById('mNextDue').value;
+      const status        = document.getElementById('mStatus').value;
+
+      if (!aircraftId || !type || !date) {
+        document.getElementById('maintenanceError').textContent = 'Aircraft, type, and date are required.';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/maintenance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aircraftId, type, description, performedBy, date, hobbsAtService, nextDue, status })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('maintenanceError').textContent = data.error; return; }
+
+      maintenance.unshift(data);
+      closeModal('maintenance');
+      renderMaintenance();
+    }
+
+    async function addRenter() {
+      const firstName = document.getElementById('rFirstName').value.trim();
+      const lastName  = document.getElementById('rLastName').value.trim();
+      const email     = document.getElementById('rEmail').value.trim();
+      if (!firstName || !lastName || !email) { document.getElementById('renterError').textContent = 'Please fill in all fields.'; return; }
+      const res = await fetch(`${API}/api/renters`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email }) });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('renterError').textContent = data.error; return; }
+      renters.push(data); closeModal('renter'); renderRenters(); renderOverview();
     }
 
     function logout() {

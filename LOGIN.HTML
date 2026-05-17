@@ -1,149 +1,365 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>FlightDesk Login</title>
+  <title>Flight Deck — Login</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: Arial, sans-serif; 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      height: 100vh;
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #060d1a;
+      min-height: 100vh;
       display: flex;
-      justify-content: center;
-      align-items: center;
     }
-    .login-container {
-      background: white;
-      padding: 40px;
+
+    /* Left branding panel */
+    .brand-panel {
+      width: 45%;
+      background: linear-gradient(160deg, #0a1628 0%, #060d1a 100%);
+      border-right: 1px solid #1a2d4a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 48px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: #2563eb;
       border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-name {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #f1f5f9;
+    }
+
+    .brand-tagline {
+      font-size: 32px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-tagline span { color: #3b82f6; }
+
+    .brand-desc {
+      font-size: 15px;
+      color: #4a6080;
+      line-height: 1.7;
+      max-width: 340px;
+    }
+
+    .brand-divider {
+      width: 48px;
+      height: 3px;
+      background: #2563eb;
+      border-radius: 2px;
+      margin: 32px 0;
+    }
+
+    .brand-stats {
+      display: flex;
+      gap: 32px;
+      margin-top: 48px;
+    }
+
+    .brand-stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+
+    .brand-stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #4a6080;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    /* Right form panel */
+    .form-panel {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      background: #060d1a;
+    }
+
+    .form-card {
       width: 100%;
       max-width: 400px;
     }
-    h1 { 
-      text-align: center; 
-      margin-bottom: 30px;
-      color: #333;
+
+    .form-header {
+      margin-bottom: 32px;
     }
-    .form-group {
-      margin-bottom: 20px;
+
+    .form-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 6px;
     }
+
+    .form-subtitle {
+      font-size: 14px;
+      color: #4a6080;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #0c1628;
+      border: 1px solid #1a2d4a;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 9px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4a6080;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: #162440;
+      color: #f1f5f9;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    /* Form elements */
+    .form-group { margin-bottom: 16px; }
+
     label {
       display: block;
-      margin-bottom: 5px;
-      color: #555;
-      font-weight: bold;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 7px;
     }
-    input {
+
+    input, select {
+      width: 100%;
+      padding: 11px 14px;
+      background: #0c1628;
+      border: 1px solid #1a2d4a;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #e2e8f0;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input::placeholder { color: #2d4a6a; }
+
+    input:focus, select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+
+    select option { background: #0c1628; }
+
+    .name-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .submit-btn {
       width: 100%;
       padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #667eea;
+      background: #2563eb;
       color: white;
       border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      font-weight: bold;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 8px;
+      transition: background 0.2s;
     }
-    button:hover {
-      background: #764ba2;
-    }
-    .error {
-      color: red;
-      margin-top: 10px;
+
+    .submit-btn:hover { background: #1d4ed8; }
+
+    .error-msg {
+      color: #f87171;
+      font-size: 13px;
+      margin-top: 12px;
+      min-height: 20px;
       text-align: center;
     }
-    .signup-link {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .signup-link a {
-      color: #667eea;
-      text-decoration: none;
+
+    .form-view { display: none; }
+    .form-view.active { display: block; }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .brand-panel { width: 100%; padding: 40px 32px 32px; }
+      .brand-tagline { font-size: 24px; }
+      .brand-stats { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <h1>✈️ FlightDesk</h1>
-    
-    <div id="loginForm">
-      <h2 style="text-align: center; margin-bottom: 20px; font-size: 18px;">Login</h2>
-      <div class="form-group">
-        <label>Email:</label>
-        <input type="email" id="email" placeholder="Enter your email">
+
+  <!-- Left branding panel -->
+  <div class="brand-panel">
+    <div class="brand-logo">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+        </svg>
       </div>
-      <div class="form-group">
-        <label>Password:</label>
-        <input type="password" id="password" placeholder="Enter your password">
-      </div>
-      <button onclick="login()">Login</button>
-      <div id="error" class="error"></div>
-      <div class="signup-link">
-        Don't have an account? <a href="#" onclick="showSignup()">Sign up</a>
-      </div>
+      <div class="brand-name">Flight Deck</div>
     </div>
 
-    <div id="signupForm" style="display: none;">
-      <h2 style="text-align: center; margin-bottom: 20px; font-size: 18px;">Sign Up</h2>
-      <div class="form-group">
-        <label>First Name:</label>
-        <input type="text" id="firstName" placeholder="Enter your first name">
+    <div class="brand-tagline">
+      Aviation operations,<br><span>simplified.</span>
+    </div>
+
+    <div class="brand-desc">
+      Manage your flight school — aircraft, instructors, students, and renters — from a single professional platform.
+    </div>
+
+    <div class="brand-divider"></div>
+
+    <div class="brand-stats">
+      <div>
+        <div class="brand-stat-value">4</div>
+        <div class="brand-stat-label">User Roles</div>
       </div>
-      <div class="form-group">
-        <label>Last Name:</label>
-        <input type="text" id="lastName" placeholder="Enter your last name">
+      <div>
+        <div class="brand-stat-value">Real-time</div>
+        <div class="brand-stat-label">Scheduling</div>
       </div>
-      <div class="form-group">
-        <label>Email:</label>
-        <input type="email" id="signupEmail" placeholder="Enter your email">
+      <div>
+        <div class="brand-stat-value">Cloud</div>
+        <div class="brand-stat-label">Hosted</div>
       </div>
-      <div class="form-group">
-        <label>Password:</label>
-        <input type="password" id="signupPassword" placeholder="Enter your password">
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="form-panel">
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-title">Welcome back</div>
+        <div class="form-subtitle">Sign in to your Flight Deck account</div>
       </div>
-      <div class="form-group">
-        <label>Role:</label>
-        <select id="signupRole" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:5px;font-size:16px;">
-          <option value="admin">Admin</option>
-          <option value="instructor">Instructor</option>
-          <option value="student">Student</option>
-          <option value="renter">Renter</option>
-        </select>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('login')">Sign In</div>
+        <div class="tab" onclick="switchTab('signup')">Create Account</div>
       </div>
-      <button onclick="signup()">Sign Up</button>
-      <div id="signupError" class="error"></div>
-      <div class="signup-link">
-        Already have an account? <a href="#" onclick="showLogin()">Login</a>
+
+      <!-- Login -->
+      <div class="form-view active" id="view-login">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter your password">
+        </div>
+        <button class="submit-btn" onclick="login()">Sign In</button>
+        <div class="error-msg" id="loginError"></div>
+      </div>
+
+      <!-- Signup -->
+      <div class="form-view" id="view-signup">
+        <div class="name-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" id="firstName" placeholder="John">
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" id="lastName" placeholder="Doe">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="signupEmail" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signupPassword" placeholder="Create a password">
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="signupRole">
+            <option value="admin">Admin</option>
+            <option value="instructor">Instructor</option>
+            <option value="student">Student</option>
+            <option value="renter">Renter</option>
+          </select>
+        </div>
+        <button class="submit-btn" onclick="signup()">Create Account</button>
+        <div class="error-msg" id="signupError"></div>
       </div>
     </div>
   </div>
 
   <script>
-    function showSignup() {
-      document.getElementById('loginForm').style.display = 'none';
-      document.getElementById('signupForm').style.display = 'block';
-    }
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
+      });
+      document.getElementById('view-login').classList.toggle('active', tab === 'login');
+      document.getElementById('view-signup').classList.toggle('active', tab === 'signup');
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('signupError').textContent = '';
 
-    function showLogin() {
-      document.getElementById('loginForm').style.display = 'block';
-      document.getElementById('signupForm').style.display = 'none';
+      const header = document.querySelector('.form-title');
+      const sub = document.querySelector('.form-subtitle');
+      if (tab === 'login') {
+        header.textContent = 'Welcome back';
+        sub.textContent = 'Sign in to your Flight Deck account';
+      } else {
+        header.textContent = 'Create account';
+        sub.textContent = 'Get started with Flight Deck';
+      }
     }
 
     async function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
 
       if (!email || !password) {
-        document.getElementById('error').textContent = 'Please fill in all fields';
+        document.getElementById('loginError').textContent = 'Please fill in all fields.';
         return;
       }
 
@@ -157,28 +373,26 @@
         const data = await response.json();
 
         if (!response.ok) {
-          document.getElementById('error').textContent = data.error;
+          document.getElementById('loginError').textContent = data.error;
           return;
         }
 
-        // Save user to localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
-        
-        // Redirect to dashboard
         window.location.href = 'flightdesk.html';
       } catch (err) {
-        document.getElementById('error').textContent = 'Error logging in: ' + err.message;
+        document.getElementById('loginError').textContent = 'Connection error. Is the server running?';
       }
     }
 
     async function signup() {
       const firstName = document.getElementById('firstName').value;
-      const lastName = document.getElementById('lastName').value;
-      const email = document.getElementById('signupEmail').value;
-      const password = document.getElementById('signupPassword').value;
+      const lastName  = document.getElementById('lastName').value;
+      const email     = document.getElementById('signupEmail').value;
+      const password  = document.getElementById('signupPassword').value;
+      const role      = document.getElementById('signupRole').value;
 
       if (!firstName || !lastName || !email || !password) {
-        document.getElementById('signupError').textContent = 'Please fill in all fields';
+        document.getElementById('signupError').textContent = 'Please fill in all fields.';
         return;
       }
 
@@ -186,7 +400,7 @@
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ firstName, lastName, email, password, role: document.getElementById('signupRole').value })
+          body: JSON.stringify({ firstName, lastName, email, password, role })
         });
 
         const data = await response.json();
@@ -196,11 +410,10 @@
           return;
         }
 
-        // Auto login after signup
         localStorage.setItem('user', JSON.stringify(data.user));
         window.location.href = 'flightdesk.html';
       } catch (err) {
-        document.getElementById('signupError').textContent = 'Error signing up: ' + err.message;
+        document.getElementById('signupError').textContent = 'Connection error. Is the server running?';
       }
     }
   </script>
