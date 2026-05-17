@@ -2071,23 +2071,25 @@
         return;
       }
 
-      let html = '<thead><tr><th>Time</th>';
-      aircraft.forEach(a => {
-        html += `<th>${a.n_number}<div style="font-size:10px;font-weight:500;color:var(--dim);text-transform:none;letter-spacing:0;">${a.model}</div></th>`;
+      const toMin = t => { const [h, m] = (t||'00:00').split(':').map(Number); return h*60+m; };
+
+      // Header row: aircraft label + one column per time slot
+      let html = '<thead><tr><th>Aircraft</th>';
+      slots.forEach(slot => {
+        const slotMin = toMin(slot);
+        const isPast  = date === today && slotMin < nowMin;
+        html += `<th style="color:${isPast ? 'var(--dim)' : ''}">${fmt12(slot)}</th>`;
       });
       html += '</tr></thead><tbody>';
 
-      const toMin = t => { const [h, m] = (t||'00:00').split(':').map(Number); return h*60+m; };
+      // One row per aircraft
+      aircraft.forEach(a => {
+        html += `<tr><td>${a.n_number}<div style="font-size:9px;font-weight:500;color:var(--dim);">${a.model}</div></td>`;
 
-      slots.forEach(slot => {
-        const slotMin   = toMin(slot);
-        const isPast    = date === today && slotMin < nowMin;
-        const timeLabel = fmt12(slot);
+        slots.forEach(slot => {
+          const slotMin = toMin(slot);
+          const isPast  = date === today && slotMin < nowMin;
 
-        html += `<tr><td style="color:${isPast ? 'var(--dim)' : 'var(--text)'};">${timeLabel}</td>`;
-
-        aircraft.forEach(a => {
-          // Find any flight whose duration covers this slot
           const blocking = flights.find(f => {
             if (f.aircraft_id !== a.id || f.date !== date || f.status === 'cancelled') return false;
             const fStart = toMin(f.time);
@@ -2102,17 +2104,14 @@
             const isPending = blocking.status === 'pending_approval';
             const color     = isPending ? '#fcd34d' : '#93c5fd';
             const cellClass = isPending ? 'avail-cell-pending' : 'avail-cell-booked';
-            // Only show pilot name on the start slot; continuation slots show a bar
             if (isStart) {
               const pilot = pilotName(blocking.student_id);
-              const instr = blocking.instructor_id
-                ? `<div style="font-size:10px;color:var(--dim);">${instructorName(blocking.instructor_id)}</div>` : '';
-              html += `<td class="${cellClass}" style="border-bottom:none;">
-                <div class="avail-cell-label" style="color:${color};">${pilot}</div>${instr}
+              html += `<td class="${cellClass}" style="border-right:none;">
+                <div class="avail-cell-label" style="color:${color};">${pilot}</div>
               </td>`;
             } else {
-              html += `<td class="${cellClass}" style="border-top:none;border-bottom:none;">
-                <div style="width:3px;height:100%;background:${color};margin:0 auto;opacity:0.4;border-radius:2px;"></div>
+              html += `<td class="${cellClass}" style="border-left:none;border-right:none;">
+                <div style="height:3px;width:100%;background:${color};margin:auto 0;opacity:0.4;border-radius:2px;"></div>
               </td>`;
             }
           } else {
