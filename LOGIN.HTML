@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FlightDesk Login</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+    h1 { 
+      text-align: center; 
+      margin-bottom: 30px;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #764ba2;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .signup-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .signup-link a {
+      color: #667eea;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>✈️ FlightDesk</h1>
+    
+    <div id="loginForm">
+      <h2 style="text-align: center; margin-bottom: 20px; font-size: 18px;">Login</h2>
+      <div class="form-group">
+        <label>Email:</label>
+        <input type="email" id="email" placeholder="Enter your email">
+      </div>
+      <div class="form-group">
+        <label>Password:</label>
+        <input type="password" id="password" placeholder="Enter your password">
+      </div>
+      <button onclick="login()">Login</button>
+      <div id="error" class="error"></div>
+      <div class="signup-link">
+        Don't have an account? <a href="#" onclick="showSignup()">Sign up</a>
+      </div>
+    </div>
+
+    <div id="signupForm" style="display: none;">
+      <h2 style="text-align: center; margin-bottom: 20px; font-size: 18px;">Sign Up</h2>
+      <div class="form-group">
+        <label>First Name:</label>
+        <input type="text" id="firstName" placeholder="Enter your first name">
+      </div>
+      <div class="form-group">
+        <label>Last Name:</label>
+        <input type="text" id="lastName" placeholder="Enter your last name">
+      </div>
+      <div class="form-group">
+        <label>Email:</label>
+        <input type="email" id="signupEmail" placeholder="Enter your email">
+      </div>
+      <div class="form-group">
+        <label>Password:</label>
+        <input type="password" id="signupPassword" placeholder="Enter your password">
+      </div>
+      <div class="form-group">
+        <label>Role:</label>
+        <select id="signupRole" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:5px;font-size:16px;">
+          <option value="admin">Admin</option>
+          <option value="instructor">Instructor</option>
+          <option value="student">Student</option>
+          <option value="renter">Renter</option>
+        </select>
+      </div>
+      <button onclick="signup()">Sign Up</button>
+      <div id="signupError" class="error"></div>
+      <div class="signup-link">
+        Already have an account? <a href="#" onclick="showLogin()">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showSignup() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('signupForm').style.display = 'block';
+    }
+
+    function showLogin() {
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('signupForm').style.display = 'none';
+    }
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        document.getElementById('error').textContent = 'Please fill in all fields';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          document.getElementById('error').textContent = data.error;
+          return;
+        }
+
+        // Save user to localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Redirect to dashboard
+        window.location.href = 'flightdesk.html';
+      } catch (err) {
+        document.getElementById('error').textContent = 'Error logging in: ' + err.message;
+      }
+    }
+
+    async function signup() {
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+
+      if (!firstName || !lastName || !email || !password) {
+        document.getElementById('signupError').textContent = 'Please fill in all fields';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstName, lastName, email, password, role: document.getElementById('signupRole').value })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          document.getElementById('signupError').textContent = data.error;
+          return;
+        }
+
+        // Auto login after signup
+        localStorage.setItem('user', JSON.stringify(data.user));
+        window.location.href = 'flightdesk.html';
+      } catch (err) {
+        document.getElementById('signupError').textContent = 'Error signing up: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

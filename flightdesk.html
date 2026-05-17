@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>FlightDeck</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; color: #1e293b; display: flex; height: 100vh; overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar { width: 240px; background: #0f172a; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-header { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .sidebar-header span { font-size: 12px; color: #64748b; margin-top: 2px; display: block; }
+    .nav-section { padding: 8px 0; }
+    .nav-label { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; padding: 12px 20px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; color: #94a3b8; font-size: 14px; transition: all 0.15s; }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+    .nav-item.active { background: #1e40af; color: white; }
+    .nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .user-name { font-weight: 600; color: #f1f5f9; font-size: 14px; }
+    .user-role-badge { display: inline-block; margin-top: 4px; font-size: 11px; background: #1e40af; color: #bfdbfe; padding: 2px 8px; border-radius: 20px; text-transform: capitalize; }
+    .logout-btn { width: 100%; padding: 8px; background: transparent; color: #64748b; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; font-size: 13px; margin-top: 12px; transition: all 0.15s; }
+    .logout-btn:hover { background: rgba(255,255,255,0.06); color: #cbd5e1; }
+
+    /* Main */
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .topbar { background: white; padding: 16px 32px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .page-title { font-size: 20px; font-weight: 700; color: #0f172a; }
+    .page-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
+    .content { padding: 28px 32px; flex: 1; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; }
+    .stat-icon { font-size: 22px; margin-bottom: 10px; }
+    .stat-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-value { font-size: 30px; font-weight: 800; color: #0f172a; margin-top: 6px; line-height: 1; }
+
+    /* Sections */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Table card */
+    .table-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; overflow: hidden; }
+    .table-header { padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+    .table-header h3 { font-size: 15px; font-weight: 700; color: #0f172a; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8fafc; padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 13px 16px; font-size: 14px; border-bottom: 1px solid #f8fafc; color: #334155; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbfc; }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: capitalize; }
+    .badge-scheduled   { background: #dbeafe; color: #1d4ed8; }
+    .badge-completed   { background: #dcfce7; color: #15803d; }
+    .badge-cancelled   { background: #fee2e2; color: #b91c1c; }
+    .badge-airworthy   { background: #dcfce7; color: #15803d; }
+    .badge-maintenance { background: #fef9c3; color: #92400e; }
+    .badge-ppl         { background: #ede9fe; color: #6d28d9; }
+    .badge-instrument  { background: #dbeafe; color: #1d4ed8; }
+    .badge-commercial  { background: #fce7f3; color: #9d174d; }
+
+    /* Buttons */
+    .btn { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 24px; color: #0f172a; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: #1e293b; background: white; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+    .form-error { color: #ef4444; font-size: 12px; margin-top: 8px; min-height: 18px; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 48px 20px; color: #94a3b8; }
+    .empty-icon { font-size: 40px; margin-bottom: 10px; }
+    .empty-state p { font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>✈️ FlightDeck</h1>
+      <span>Flight School Management</span>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Navigation</div>
+      <div class="nav-item active" id="nav-overview" onclick="showSection('overview')">
+        <span class="icon">📊</span> Overview
+      </div>
+      <div class="nav-item" id="nav-flights" onclick="showSection('flights')">
+        <span class="icon">🛫</span> Flights
+      </div>
+      <div class="nav-item hide-student" id="nav-students" onclick="showSection('students')">
+        <span class="icon">🎓</span> Students
+      </div>
+      <div class="nav-item admin-only" id="nav-aircraft" onclick="showSection('aircraft')">
+        <span class="icon">✈️</span> Aircraft
+      </div>
+      <div class="nav-item admin-only" id="nav-instructors" onclick="showSection('instructors')">
+        <span class="icon">👨‍✈️</span> Instructors
+      </div>
+      <div class="nav-item admin-only" id="nav-renters" onclick="showSection('renters')">
+        <span class="icon">🔑</span> Renters
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-name" id="sidebarName">—</div>
+      <div class="user-role-badge" id="sidebarRole">—</div>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="pageTitle">Overview</div>
+        <div class="page-subtitle" id="pageSubtitle">Welcome back!</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Overview -->
+      <div class="section active" id="section-overview">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="table-card">
+          <div class="table-header"><h3>Recent Flights</h3></div>
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Time</th><th>Pilot</th><th>Instructor</th><th>Aircraft</th><th>Status</th></tr>
+            </thead>
+            <tbody id="recentFlightsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Flights -->
+      <div class="section" id="section-flights">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>All Flights</h3>
+            <button class="btn btn-primary" id="bookFlightBtn" onclick="openModal('flight')">+ Book Flight</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Time</th><th>Pilot</th><th>Instructor</th><th>Aircraft</th><th>Duration</th><th>Status</th></tr>
+            </thead>
+            <tbody id="flightsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Students -->
+      <div class="section" id="section-students">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Students</h3>
+            <button class="btn btn-primary" onclick="openModal('student')">+ Add Student</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Stage</th></tr>
+            </thead>
+            <tbody id="studentsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Aircraft -->
+      <div class="section" id="section-aircraft">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Aircraft Fleet</h3>
+            <button class="btn btn-primary" onclick="openModal('aircraft')">+ Add Aircraft</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>N-Number</th><th>Model</th><th>Hobbs</th><th>Status</th></tr>
+            </thead>
+            <tbody id="aircraftBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Instructors -->
+      <div class="section" id="section-instructors">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Instructors</h3>
+            <button class="btn btn-primary" onclick="openModal('instructor')">+ Add Instructor</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Email</th></tr>
+            </thead>
+            <tbody id="instructorsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Renters -->
+      <div class="section" id="section-renters">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Renters</h3>
+            <button class="btn btn-primary" onclick="openModal('renter')">+ Add Renter</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Email</th></tr>
+            </thead>
+            <tbody id="rentersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Add Renter -->
+  <div class="modal-overlay" id="modal-renter">
+    <div class="modal">
+      <h2>🔑 Add Renter</h2>
+      <div class="form-group"><label>First Name</label><input type="text" id="rFirstName" placeholder="John"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="rLastName" placeholder="Doe"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="rEmail" placeholder="john@example.com"></div>
+      <div class="form-error" id="renterError"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('renter')">Cancel</button>
+        <button class="btn btn-primary" onclick="addRenter()">Add Renter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Book Flight -->
+  <div class="modal-overlay" id="modal-flight">
+    <div class="modal">
+      <h2>🛫 Book a Flight</h2>
+      <div class="form-group">
+        <label>Pilot Type</label>
+        <select id="fPilotType" onchange="updatePilotDropdown()">
+          <option value="student">Student</option>
+          <option value="renter">Renter</option>
+        </select>
+      </div>
+      <div class="form-group"><label id="fPilotLabel">Student</label><select id="fPilot"></select></div>
+      <div class="form-group"><label>Instructor (optional)</label><select id="fInstructor"></select></div>
+      <div class="form-group"><label>Aircraft</label><select id="fAircraft"></select></div>
+      <div class="form-group"><label>Date</label><input type="date" id="fDate"></div>
+      <div class="form-group"><label>Time</label><input type="time" id="fTime"></div>
+      <div class="form-group"><label>Duration (hours)</label><input type="number" id="fDuration" value="1.5" step="0.5" min="0.5"></div>
+      <div class="form-error" id="flightError"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('flight')">Cancel</button>
+        <button class="btn btn-primary" onclick="bookFlight()">Book Flight</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Student -->
+  <div class="modal-overlay" id="modal-student">
+    <div class="modal">
+      <h2>🎓 Add Student</h2>
+      <div class="form-group"><label>First Name</label><input type="text" id="sFirstName" placeholder="John"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="sLastName" placeholder="Doe"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="sEmail" placeholder="john@example.com"></div>
+      <div class="form-group">
+        <label>Stage</label>
+        <select id="sStage">
+          <option value="PPL">Private Pilot (PPL)</option>
+          <option value="Instrument">Instrument Rating</option>
+          <option value="Commercial">Commercial</option>
+        </select>
+      </div>
+      <div class="form-error" id="studentError"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('student')">Cancel</button>
+        <button class="btn btn-primary" onclick="addStudent()">Add Student</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Aircraft -->
+  <div class="modal-overlay" id="modal-aircraft">
+    <div class="modal">
+      <h2>✈️ Add Aircraft</h2>
+      <div class="form-group"><label>N-Number</label><input type="text" id="aNNumber" placeholder="N12345"></div>
+      <div class="form-group"><label>Model</label><input type="text" id="aModel" placeholder="Cessna 172"></div>
+      <div class="form-group"><label>Hobbs Hours</label><input type="number" id="aHobbs" placeholder="1200" step="0.1" min="0"></div>
+      <div class="form-error" id="aircraftError"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('aircraft')">Cancel</button>
+        <button class="btn btn-primary" onclick="addAircraft()">Add Aircraft</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Instructor -->
+  <div class="modal-overlay" id="modal-instructor">
+    <div class="modal">
+      <h2>👨‍✈️ Add Instructor</h2>
+      <div class="form-group"><label>First Name</label><input type="text" id="iFirstName" placeholder="Jane"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="iLastName" placeholder="Smith"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="iEmail" placeholder="jane@flightschool.com"></div>
+      <div class="form-error" id="instructorError"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('instructor')">Cancel</button>
+        <button class="btn btn-primary" onclick="addInstructor()">Add Instructor</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    let user = null;
+    let flights = [], students = [], aircraft = [], instructors = [], renters = [];
+
+    // ── Init ──────────────────────────────────────────
+    function init() {
+      const stored = localStorage.getItem('user');
+      if (!stored) { window.location.href = 'LOGIN.HTML'; return; }
+      user = JSON.parse(stored);
+
+      document.getElementById('sidebarName').textContent = `${user.firstName} ${user.lastName}`;
+      document.getElementById('sidebarRole').textContent = user.role;
+      document.getElementById('pageSubtitle').textContent = `Welcome back, ${user.firstName}!`;
+
+      applyRoleUI();
+      loadAll();
+    }
+
+    function applyRoleUI() {
+      if (user.role !== 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+      }
+      if (user.role === 'student') {
+        document.querySelectorAll('.hide-student').forEach(el => el.style.display = 'none');
+        document.getElementById('bookFlightBtn').style.display = 'none';
+      }
+      if (user.role === 'renter') {
+        document.querySelectorAll('.hide-student').forEach(el => el.style.display = 'none');
+      }
+    }
+
+    async function loadAll() {
+      await Promise.all([fetchFlights(), fetchStudents(), fetchAircraft(), fetchInstructors(), fetchRenters()]);
+      renderOverview();
+    }
+
+    // ── Fetch ─────────────────────────────────────────
+    async function fetchFlights() {
+      try { const r = await fetch(`${API}/api/flights`); flights = await r.json(); } catch { flights = []; }
+    }
+    async function fetchStudents() {
+      try { const r = await fetch(`${API}/api/students`); students = await r.json(); } catch { students = []; }
+    }
+    async function fetchAircraft() {
+      try { const r = await fetch(`${API}/api/aircraft`); aircraft = await r.json(); } catch { aircraft = []; }
+    }
+    async function fetchInstructors() {
+      try { const r = await fetch(`${API}/api/instructors`); instructors = await r.json(); } catch { instructors = []; }
+    }
+    async function fetchRenters() {
+      try { const r = await fetch(`${API}/api/renters`); renters = await r.json(); } catch { renters = []; }
+    }
+
+    // ── Helpers ───────────────────────────────────────
+    function pilotName(id) {
+      const s = students.find(s => s.id === id);
+      if (s) return `${s.first_name} ${s.last_name}`;
+      const r = renters.find(r => r.id === id);
+      if (r) return `${r.first_name} ${r.last_name} 🔑`;
+      return '—';
+    }
+    function instructorName(id) {
+      if (!id) return '—';
+      const i = instructors.find(i => i.id === id);
+      return i ? `${i.first_name} ${i.last_name}` : '—';
+    }
+    function aircraftLabel(id) {
+      const a = aircraft.find(a => a.id === id);
+      return a ? `${a.n_number} (${a.model})` : '—';
+    }
+    function myFlights() {
+      if (user.role === 'admin') return flights;
+      if (user.role === 'instructor') return flights.filter(f => f.instructor_id === user.id);
+      return flights.filter(f => f.student_id === user.id);
+    }
+    function badge(val) {
+      const cls = (val || '').toLowerCase().replace(/\s+/g, '-');
+      return `<span class="badge badge-${cls}">${val || '—'}</span>`;
+    }
+
+    // ── Render ────────────────────────────────────────
+    function flightRows(list, cols) {
+      if (!list.length) return `<tr><td colspan="${cols}"><div class="empty-state"><div class="empty-icon">🛫</div><p>No flights found</p></div></td></tr>`;
+      return list.map(f => `
+        <tr>
+          <td>${f.date}</td>
+          <td>${f.time}</td>
+          <td>${pilotName(f.student_id)}</td>
+          <td>${instructorName(f.instructor_id)}</td>
+          <td>${aircraftLabel(f.aircraft_id)}</td>
+          ${cols === 7 ? `<td>${f.duration || '—'}h</td>` : ''}
+          <td>${badge(f.status)}</td>
+        </tr>`).join('');
+    }
+
+    function renderOverview() {
+      const mine = myFlights();
+      const today = new Date().toISOString().split('T')[0];
+      let stats = [];
+
+      if (user.role === 'admin') {
+        stats = [
+          { icon: '🛫', label: "Today's Flights", value: mine.filter(f => f.date === today).length },
+          { icon: '📅', label: 'Scheduled', value: mine.filter(f => f.status === 'scheduled').length },
+          { icon: '✈️', label: 'Aircraft', value: aircraft.length },
+          { icon: '🎓', label: 'Students', value: students.length },
+          { icon: '👨‍✈️', label: 'Instructors', value: instructors.length },
+          { icon: '🔑', label: 'Renters', value: renters.length },
+        ];
+      } else if (user.role === 'instructor') {
+        const myStudentIds = [...new Set(mine.map(f => f.student_id))];
+        stats = [
+          { icon: '🛫', label: "Today's Flights", value: mine.filter(f => f.date === today).length },
+          { icon: '📅', label: 'Scheduled', value: mine.filter(f => f.status === 'scheduled').length },
+          { icon: '🎓', label: 'My Students', value: myStudentIds.length },
+          { icon: '⏱️', label: 'Total Hours', value: mine.reduce((s, f) => s + (f.duration || 0), 0) + 'h' },
+        ];
+      } else {
+        stats = [
+          { icon: '🛫', label: "Today's Flights", value: mine.filter(f => f.date === today).length },
+          { icon: '📅', label: 'Upcoming', value: mine.filter(f => f.status === 'scheduled').length },
+          { icon: '⏱️', label: 'Logged Hours', value: mine.filter(f => f.status === 'completed').reduce((s, f) => s + (f.duration || 0), 0) + 'h' },
+        ];
+      }
+
+      document.getElementById('statsGrid').innerHTML = stats.map(s => `
+        <div class="stat-card">
+          <div class="stat-icon">${s.icon}</div>
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value">${s.value}</div>
+        </div>`).join('');
+
+      const recent = [...mine].sort((a, b) => (b.date > a.date ? 1 : -1)).slice(0, 8);
+      document.getElementById('recentFlightsBody').innerHTML = flightRows(recent, 6);
+    }
+
+    function renderFlights() {
+      document.getElementById('flightsBody').innerHTML = flightRows(
+        [...myFlights()].sort((a, b) => (b.date > a.date ? 1 : -1)), 7
+      );
+    }
+
+    function renderStudents() {
+      const tbody = document.getElementById('studentsBody');
+      if (!students.length) {
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🎓</div><p>No students yet</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = students.map(s => `
+        <tr>
+          <td>${s.first_name} ${s.last_name}</td>
+          <td>${s.email || '—'}</td>
+          <td>${badge(s.stage)}</td>
+        </tr>`).join('');
+    }
+
+    function renderAircraft() {
+      const tbody = document.getElementById('aircraftBody');
+      if (!aircraft.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">✈️</div><p>No aircraft yet</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = aircraft.map(a => `
+        <tr>
+          <td><strong>${a.n_number}</strong></td>
+          <td>${a.model}</td>
+          <td>${a.hobbs}h</td>
+          <td>${badge(a.status)}</td>
+        </tr>`).join('');
+    }
+
+    function renderInstructors() {
+      const tbody = document.getElementById('instructorsBody');
+      if (!instructors.length) {
+        tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">👨‍✈️</div><p>No instructors yet</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = instructors.map(i => `
+        <tr>
+          <td>${i.first_name} ${i.last_name}</td>
+          <td>${i.email || '—'}</td>
+        </tr>`).join('');
+    }
+
+    // ── Navigation ────────────────────────────────────
+    const sections = {
+      overview:    { title: 'Overview',    subtitle: 'Your flight school at a glance' },
+      flights:     { title: 'Flights',     subtitle: 'View and manage all flights' },
+      students:    { title: 'Students',    subtitle: 'Manage the student roster' },
+      aircraft:    { title: 'Aircraft',    subtitle: 'Fleet management' },
+      instructors: { title: 'Instructors', subtitle: 'Instructor roster' },
+      renters:     { title: 'Renters',     subtitle: 'Manage aircraft renters' },
+    };
+
+    function showSection(name) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(`section-${name}`).classList.add('active');
+      document.getElementById(`nav-${name}`).classList.add('active');
+      document.getElementById('pageTitle').textContent = sections[name].title;
+      document.getElementById('pageSubtitle').textContent = sections[name].subtitle;
+      if (name === 'flights')     renderFlights();
+      if (name === 'students')    renderStudents();
+      if (name === 'aircraft')    renderAircraft();
+      if (name === 'instructors') renderInstructors();
+      if (name === 'renters')     renderRenters();
+    }
+
+    function renderRenters() {
+      const tbody = document.getElementById('rentersBody');
+      if (!renters.length) {
+        tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">🔑</div><p>No renters yet</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = renters.map(r => `
+        <tr>
+          <td>${r.first_name} ${r.last_name}</td>
+          <td>${r.email || '—'}</td>
+        </tr>`).join('');
+    }
+
+    // ── Modals ────────────────────────────────────────
+    function updatePilotDropdown() {
+      const type = document.getElementById('fPilotType').value;
+      document.getElementById('fPilotLabel').textContent = type === 'renter' ? 'Renter' : 'Student';
+      document.getElementById('fPilot').innerHTML = type === 'renter'
+        ? renters.map(r => `<option value="${r.id}">${r.first_name} ${r.last_name}</option>`).join('')
+        : students.map(s => `<option value="${s.id}">${s.first_name} ${s.last_name}</option>`).join('');
+    }
+
+    function openModal(type) {
+      if (type === 'flight') {
+        document.getElementById('fPilotType').value = 'student';
+        updatePilotDropdown();
+        document.getElementById('fInstructor').innerHTML =
+          '<option value="">— No instructor —</option>' +
+          instructors.map(i => `<option value="${i.id}">${i.first_name} ${i.last_name}</option>`).join('');
+        document.getElementById('fAircraft').innerHTML =
+          aircraft.map(a => `<option value="${a.id}">${a.n_number} – ${a.model}</option>`).join('');
+        document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+      }
+      document.getElementById(`modal-${type}`).classList.add('open');
+    }
+
+    function closeModal(type) {
+      document.getElementById(`modal-${type}`).classList.remove('open');
+      const errEl = document.getElementById(`${type}Error`);
+      if (errEl) errEl.textContent = '';
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+    });
+
+    // ── Actions ───────────────────────────────────────
+    async function bookFlight() {
+      const studentId    = document.getElementById('fPilot').value;
+      const instructorId = document.getElementById('fInstructor').value || null;
+      const aircraftId   = document.getElementById('fAircraft').value;
+      const date         = document.getElementById('fDate').value;
+      const time         = document.getElementById('fTime').value;
+      const duration     = parseFloat(document.getElementById('fDuration').value);
+
+      if (!studentId || !aircraftId || !date || !time) {
+        document.getElementById('flightError').textContent = 'Please fill in all required fields.';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/flights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, instructorId, aircraftId, date, time, duration })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('flightError').textContent = data.error; return; }
+
+      flights.push(data);
+      closeModal('flight');
+      renderFlights();
+      renderOverview();
+    }
+
+    async function addRenter() {
+      const firstName = document.getElementById('rFirstName').value.trim();
+      const lastName  = document.getElementById('rLastName').value.trim();
+      const email     = document.getElementById('rEmail').value.trim();
+
+      if (!firstName || !lastName || !email) {
+        document.getElementById('renterError').textContent = 'Please fill in all fields.';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/renters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('renterError').textContent = data.error; return; }
+
+      renters.push(data);
+      closeModal('renter');
+      renderRenters();
+      renderOverview();
+    }
+
+    async function addStudent() {
+      const firstName = document.getElementById('sFirstName').value.trim();
+      const lastName  = document.getElementById('sLastName').value.trim();
+      const email     = document.getElementById('sEmail').value.trim();
+      const stage     = document.getElementById('sStage').value;
+
+      if (!firstName || !lastName || !email) {
+        document.getElementById('studentError').textContent = 'Please fill in all fields.';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, stage })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('studentError').textContent = data.error; return; }
+
+      students.push(data);
+      closeModal('student');
+      renderStudents();
+      renderOverview();
+    }
+
+    async function addAircraft() {
+      const nNumber = document.getElementById('aNNumber').value.trim();
+      const model   = document.getElementById('aModel').value.trim();
+      const hobbs   = parseFloat(document.getElementById('aHobbs').value) || 0;
+
+      if (!nNumber || !model) {
+        document.getElementById('aircraftError').textContent = 'N-Number and model are required.';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/aircraft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nNumber, model, hobbs })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('aircraftError').textContent = data.error; return; }
+
+      aircraft.push(data);
+      closeModal('aircraft');
+      renderAircraft();
+      renderOverview();
+    }
+
+    async function addInstructor() {
+      const firstName = document.getElementById('iFirstName').value.trim();
+      const lastName  = document.getElementById('iLastName').value.trim();
+      const email     = document.getElementById('iEmail').value.trim();
+
+      if (!firstName || !lastName || !email) {
+        document.getElementById('instructorError').textContent = 'Please fill in all fields.';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/instructors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('instructorError').textContent = data.error; return; }
+
+      instructors.push(data);
+      closeModal('instructor');
+      renderInstructors();
+      renderOverview();
+    }
+
+    function logout() {
+      localStorage.removeItem('user');
+      window.location.href = 'LOGIN.HTML';
+    }
+
+    init();
+  </script>
+</body>
+</html>
