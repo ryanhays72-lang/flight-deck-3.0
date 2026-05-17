@@ -1748,7 +1748,8 @@
     }
 
     function decodeTAF(taf) {
-      if (!taf || !taf.forecast || !taf.forecast.length) return '<div style="color:var(--dim);font-size:13px;">No forecast periods available.</div>';
+      const periods = taf?.fcsts || taf?.forecast;
+      if (!periods || !periods.length) return '<div style="color:var(--dim);font-size:13px;">No forecast periods available.</div>';
 
       const catColors = { VFR:'#6ee7b7', MVFR:'#93c5fd', IFR:'#f87171', LIFR:'#f0abfc' };
       const catBgs    = { VFR:'rgba(16,185,129,0.07)', MVFR:'rgba(37,99,235,0.07)', IFR:'rgba(239,68,68,0.07)', LIFR:'rgba(217,70,239,0.07)' };
@@ -1797,11 +1798,12 @@
         return clouds.map(c => `${coverMap[c.cover] || c.cover} @ ${Number(c.base).toLocaleString()}'`).join(', ');
       }
 
-      return taf.forecast.map((f, i) => {
-        const prob      = f.chc ? `PROB${f.chc} ` : '';
+      return periods.map((f, i) => {
+        const prob      = f.probability ? `PROB${f.probability} ` : '';
         const change    = f.fcstChange || (i === 0 ? 'Initial' : 'FM');
         const label     = prob + change;
-        const cat       = fltCat(f.visib, f.clouds);
+        const visNum    = parseFloat(f.visib);
+        const cat       = fltCat(visNum, f.clouds);
         const color     = catColors[cat] || '#94a3b8';
         const bg        = catBgs[cat]    || 'transparent';
         const wind      = fmtWind(f.wdir, f.wspd, f.wgst);
