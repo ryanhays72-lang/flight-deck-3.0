@@ -178,11 +178,25 @@ app.post('/api/flights', async (req, res) => {
       .select('*')
       .eq('aircraft_id', aircraftId)
       .eq('date', date)
-      .eq('time', time)
       .neq('status', 'cancelled');
 
     if (checkError) return res.status(400).json({ error: checkError.message });
-    if (existing.length > 0) return res.status(409).json({ error: 'Aircraft already booked for that date and time' });
+
+    const toMin = t => { const [h, m] = (t || '00:00').split(':').map(Number); return h * 60 + m; };
+    const newStart = toMin(time);
+    const newEnd   = newStart + (duration || 2) * 60;
+
+    const conflict = existing.find(f => {
+      const fStart = toMin(f.time);
+      const fEnd   = fStart + (f.duration || 2) * 60;
+      return newStart < fEnd && newEnd > fStart;
+    });
+
+    if (conflict) {
+      return res.status(409).json({
+        error: `Aircraft is already booked from ${conflict.time} for ${conflict.duration}h — choose a different time or aircraft`
+      });
+    }
 
     const { data, error } = await supabase
       .from('flights')

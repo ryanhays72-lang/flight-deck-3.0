@@ -2040,32 +2040,44 @@
       });
       html += '</tr></thead><tbody>';
 
+      const toMin = t => { const [h, m] = (t||'00:00').split(':').map(Number); return h*60+m; };
+
       slots.forEach(slot => {
-        const [h, m] = slot.split(':').map(Number);
-        const slotMin = h * 60 + m;
-        const isPast  = date === today && slotMin < nowMin;
+        const slotMin   = toMin(slot);
+        const isPast    = date === today && slotMin < nowMin;
         const timeLabel = fmt12(slot);
 
         html += `<tr><td style="color:${isPast ? 'var(--dim)' : 'var(--text)'};">${timeLabel}</td>`;
 
         aircraft.forEach(a => {
-          const flight = flights.find(f =>
-            f.aircraft_id === a.id &&
-            f.date === date &&
-            f.time === slot &&
-            f.status !== 'cancelled'
-          );
+          // Find any flight whose duration covers this slot
+          const blocking = flights.find(f => {
+            if (f.aircraft_id !== a.id || f.date !== date || f.status === 'cancelled') return false;
+            const fStart = toMin(f.time);
+            const fEnd   = fStart + (f.duration || 1) * 60;
+            return slotMin >= fStart && slotMin < fEnd;
+          });
 
           if (isPast) {
             html += `<td class="avail-cell-past"></td>`;
-          } else if (flight) {
-            const pilot = pilotName(flight.student_id);
-            const instr = flight.instructor_id ? `<div style="color:var(--dim);">${instructorName(flight.instructor_id)}</div>` : '';
-            const isPending = flight.status === 'pending_approval';
-            html += `<td class="${isPending ? 'avail-cell-pending' : 'avail-cell-booked'}">
-              <div class="avail-cell-label" style="color:${isPending ? '#fcd34d' : '#93c5fd'};">${pilot}</div>
-              ${instr}
-            </td>`;
+          } else if (blocking) {
+            const isStart   = toMin(blocking.time) === slotMin;
+            const isPending = blocking.status === 'pending_approval';
+            const color     = isPending ? '#fcd34d' : '#93c5fd';
+            const cellClass = isPending ? 'avail-cell-pending' : 'avail-cell-booked';
+            // Only show pilot name on the start slot; continuation slots show a bar
+            if (isStart) {
+              const pilot = pilotName(blocking.student_id);
+              const instr = blocking.instructor_id
+                ? `<div style="font-size:10px;color:var(--dim);">${instructorName(blocking.instructor_id)}</div>` : '';
+              html += `<td class="${cellClass}" style="border-bottom:none;">
+                <div class="avail-cell-label" style="color:${color};">${pilot}</div>${instr}
+              </td>`;
+            } else {
+              html += `<td class="${cellClass}" style="border-top:none;border-bottom:none;">
+                <div style="width:3px;height:100%;background:${color};margin:0 auto;opacity:0.4;border-radius:2px;"></div>
+              </td>`;
+            }
           } else {
             html += `<td class="avail-cell-free" onclick="quickBook('${a.id}','${slot}','${date}')">
               <div class="avail-cell-label" style="color:#6ee7b7;">Open</div>
