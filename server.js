@@ -52,7 +52,7 @@ app.post('/api/schools', async (req, res) => {
 // AUTH
 // =======================
 app.post('/api/auth/register', async (req, res) => {
-  const { firstName, lastName, email, password, role, schoolId } = req.body;
+  const { firstName, lastName, email, phone, password, role, schoolId } = req.body;
 
   if (!firstName || !lastName || !email || !password || !role) {
     return res.status(400).json({ error: 'All fields are required' });
@@ -72,17 +72,17 @@ app.post('/api/auth/register', async (req, res) => {
 
   if (role === 'instructor') {
     await supabase.from('instructors').insert([{
-      id: data.user.id, first_name: firstName, last_name: lastName, email, school_id: sid
+      id: data.user.id, first_name: firstName, last_name: lastName, email, phone: phone || null, school_id: sid
     }]);
   }
   if (role === 'student') {
     await supabase.from('students').insert([{
-      id: data.user.id, first_name: firstName, last_name: lastName, email, stage: 'PPL', school_id: sid
+      id: data.user.id, first_name: firstName, last_name: lastName, email, phone: phone || null, stage: 'PPL', school_id: sid
     }]);
   }
   if (role === 'renter') {
     await supabase.from('renters').insert([{
-      id: data.user.id, first_name: firstName, last_name: lastName, email, school_id: sid
+      id: data.user.id, first_name: firstName, last_name: lastName, email, phone: phone || null, school_id: sid
     }]);
   }
 

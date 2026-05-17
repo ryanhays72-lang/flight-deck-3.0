@@ -315,6 +315,10 @@
           <input type="email" id="signupEmail" placeholder="you@example.com">
         </div>
         <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="signupPhone" placeholder="(555) 555-5555">
+        </div>
+        <div class="form-group">
           <label>Password</label>
           <input type="password" id="signupPassword" placeholder="Create a password">
         </div>
@@ -388,6 +392,7 @@
       const firstName = document.getElementById('firstName').value;
       const lastName  = document.getElementById('lastName').value;
       const email     = document.getElementById('signupEmail').value;
+      const phone     = document.getElementById('signupPhone').value;
       const password  = document.getElementById('signupPassword').value;
       const role      = document.getElementById('signupRole').value;
 
@@ -400,7 +405,7 @@
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ firstName, lastName, email, password, role })
+          body: JSON.stringify({ firstName, lastName, email, phone, password, role })
         });
 
         const data = await response.json();
