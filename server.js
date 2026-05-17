@@ -221,10 +221,17 @@ app.post('/api/flights', async (req, res) => {
 
 app.patch('/api/flights/:id', async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
-  const allowed = ['scheduled', 'cancelled', 'completed', 'pending_approval'];
-  if (!allowed.includes(status)) return res.status(400).json({ error: 'Invalid status' });
-  const { data, error } = await supabase.from('flights').update({ status }).eq('id', id).select();
+  const { status, hobbsOn, hobbsOff, tachTime } = req.body;
+  const updates = {};
+  if (status !== undefined) {
+    const allowed = ['scheduled', 'cancelled', 'completed', 'pending_approval'];
+    if (!allowed.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+    updates.status = status;
+  }
+  if (hobbsOn  !== undefined) updates.hobbs_on  = hobbsOn  ? parseFloat(hobbsOn)  : null;
+  if (hobbsOff !== undefined) updates.hobbs_off = hobbsOff ? parseFloat(hobbsOff) : null;
+  if (tachTime !== undefined) updates.tach_time = tachTime ? parseFloat(tachTime) : null;
+  const { data, error } = await supabase.from('flights').update(updates).eq('id', id).select();
   if (error) return res.status(400).json({ error: error.message });
   if (!data.length) return res.status(404).json({ error: 'Flight not found' });
   res.json(data[0]);
@@ -289,7 +296,7 @@ app.get('/api/preflight', async (req, res) => {
 app.post('/api/preflight', async (req, res) => {
   const {
     studentId, aircraftId, date, time,
-    fuelLeft, fuelRight, oilLevel,
+    fuelLeft, fuelRight, oilLevel, oilAdded,
     documentsOk, exteriorOk, cockpitOk, engineOk,
     squawks, airworthy, studentName, schoolId
   } = req.body;
@@ -307,6 +314,7 @@ app.post('/api/preflight', async (req, res) => {
       fuel_left: fuelLeft ? parseFloat(fuelLeft) : null,
       fuel_right: fuelRight ? parseFloat(fuelRight) : null,
       oil_level: oilLevel || null,
+      oil_added: oilAdded ? parseFloat(oilAdded) : null,
       documents_ok: documentsOk, exterior_ok: exteriorOk,
       cockpit_ok: cockpitOk, engine_ok: engineOk,
       squawks: squawks || null, airworthy,
