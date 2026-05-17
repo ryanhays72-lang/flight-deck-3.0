@@ -1466,7 +1466,7 @@
       widget.innerHTML = '<div class="wx-placeholder">Loading METAR...</div>';
 
       try {
-        const res  = await fetch(`https://aviationweather.gov/api/data/metar?ids=${id}&format=json`);
+        const res  = await fetch(`${API}/api/weather/${id}`);
         const data = await res.json();
 
         if (!data || !data.length) {

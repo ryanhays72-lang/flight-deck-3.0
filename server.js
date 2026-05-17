@@ -334,6 +334,23 @@ app.post('/api/maintenance', async (req, res) => {
   res.json(data[0]);
 });
 
+// =======================
+// WEATHER PROXY
+// =======================
+app.get('/api/weather/:icao', async (req, res) => {
+  const icao = req.params.icao.toUpperCase();
+  try {
+    const response = await fetch(
+      `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`
+    );
+    if (!response.ok) return res.status(response.status).json({ error: 'Weather service error' });
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Could not reach weather service' });
+  }
+});
+
 // START SERVER
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
