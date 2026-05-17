@@ -752,9 +752,30 @@
         </div>
 
         <!-- Inspection status -->
-        <div class="table-card">
+        <div class="table-card" style="margin-bottom:16px;">
           <div class="table-header"><h3>Aircraft Inspection Status</h3></div>
           <div id="inspectionStatus" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div>
+        </div>
+
+        <!-- Availability grid in dashboard -->
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Aircraft Availability</h3>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="shiftDashDate(-1)">‹ Prev</button>
+              <span id="dashDateLabel" style="font-size:12px;font-weight:700;color:var(--text);min-width:130px;text-align:center;"></span>
+              <button class="btn btn-secondary" style="font-size:11px;padding:4px 9px;" onclick="shiftDashDate(1)">Next ›</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="avail-table" id="dashAvailGrid"></table>
+          </div>
+          <div style="padding:10px 20px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:11px;color:var(--muted);">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(16,185,129,0.2);margin-right:4px;vertical-align:middle;"></span>Open</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(37,99,235,0.2);margin-right:4px;vertical-align:middle;"></span>Booked</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,158,11,0.15);margin-right:4px;vertical-align:middle;"></span>Pending</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(26,45,74,0.4);margin-right:4px;vertical-align:middle;"></span>Past</span>
+          </div>
         </div>
 
       </div>
@@ -832,7 +853,7 @@
             <h3>Aircraft Availability</h3>
             <div style="display:flex;align-items:center;gap:10px;">
               <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="shiftAvailDate(-1)">‹ Prev</button>
-              <input type="date" id="availDate" onchange="renderAvailability()"
+              <input type="date" id="availDate" onchange="renderAvailability(this.value,'availGrid')"
                 style="background:var(--elevated);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;">
               <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="shiftAvailDate(1)">Next ›</button>
             </div>
@@ -1461,6 +1482,7 @@
         document.getElementById('weatherWidget').innerHTML =
           '<div class="wx-placeholder">No home airport set for this school.<br>Contact your admin to configure one.</div>';
       }
+      renderDashAvail();
     }
 
     // ── Today's schedule ──────────────────────────────
@@ -1892,7 +1914,7 @@
       if (name === 'availability') {
         const el = document.getElementById('availDate');
         if (!el.value) el.value = new Date().toISOString().split('T')[0];
-        renderAvailability();
+        renderAvailability(el.value, 'availGrid');
       }
       if (name === 'students')    renderStudents();
       if (name === 'aircraft')    renderAircraft();
@@ -2014,16 +2036,31 @@
       return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
     }
 
-    function shiftAvailDate(days) {
-      const el = document.getElementById('availDate');
-      const d  = new Date(el.value || new Date().toISOString().split('T')[0]);
+    let dashAvailDate = new Date().toISOString().split('T')[0];
+
+    function shiftDashDate(days) {
+      const d = new Date(dashAvailDate + 'T12:00:00');
       d.setDate(d.getDate() + days);
-      el.value = d.toISOString().split('T')[0];
-      renderAvailability();
+      dashAvailDate = d.toISOString().split('T')[0];
+      renderDashAvail();
     }
 
-    function renderAvailability() {
-      const date    = document.getElementById('availDate').value;
+    function renderDashAvail() {
+      const label = new Date(dashAvailDate + 'T12:00:00')
+        .toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+      document.getElementById('dashDateLabel').textContent = label;
+      renderAvailability(dashAvailDate, 'dashAvailGrid');
+    }
+
+    function shiftAvailDate(days) {
+      const el = document.getElementById('availDate');
+      const d  = new Date(el.value + 'T12:00:00');
+      d.setDate(d.getDate() + days);
+      el.value = d.toISOString().split('T')[0];
+      renderAvailability(el.value, 'availGrid');
+    }
+
+    function renderAvailability(date, targetId) {
       const today   = new Date().toISOString().split('T')[0];
       const nowMin  = new Date().getHours() * 60 + new Date().getMinutes();
       const slots   = timeSlots();
@@ -2089,7 +2126,7 @@
       });
 
       html += '</tbody>';
-      document.getElementById('availGrid').innerHTML = html;
+      document.getElementById(targetId).innerHTML = html;
     }
 
     function quickBook(aircraftId, time, date) {
