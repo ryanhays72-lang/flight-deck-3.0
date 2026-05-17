@@ -1726,6 +1726,88 @@
       }
     }
 
+    function decodeTAF(taf) {
+      if (!taf || !taf.forecast || !taf.forecast.length) return '<div style="color:var(--dim);font-size:13px;">No forecast periods available.</div>';
+
+      const catColors = { VFR:'#6ee7b7', MVFR:'#93c5fd', IFR:'#f87171', LIFR:'#f0abfc' };
+      const catBgs    = { VFR:'rgba(16,185,129,0.07)', MVFR:'rgba(37,99,235,0.07)', IFR:'rgba(239,68,68,0.07)', LIFR:'rgba(217,70,239,0.07)' };
+      const coverMap  = { SKC:'Clear', CLR:'Clear', FEW:'Few', SCT:'Scattered', BKN:'Broken', OVC:'Overcast', VV:'Vert Vis' };
+
+      function fltCat(visib, clouds) {
+        const ceiling = (clouds || [])
+          .filter(c => c.cover === 'BKN' || c.cover === 'OVC' || c.cover === 'VV')
+          .map(c => Number(c.base)).sort((a,b) => a-b)[0];
+        const v = parseFloat(visib);
+        if (ceiling < 500  || v < 1) return 'LIFR';
+        if (ceiling < 1000 || v < 3) return 'IFR';
+        if (ceiling < 3000 || v < 5) return 'MVFR';
+        return 'VFR';
+      }
+
+      function fmtTime(ts) {
+        if (!ts) return '—';
+        return new Date(ts * 1000).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      }
+
+      function fmtWind(dir, spd, gst) {
+        if (!spd || spd === 0) return 'Calm';
+        const d = dir === 0 ? 'VRB' : String(dir).padStart(3,'0') + '°';
+        return `${d} @ ${spd}kt${gst ? ' G' + gst + 'kt' : ''}`;
+      }
+
+      function decodeWx(wx) {
+        if (!wx) return '';
+        return wx
+          .replace(/\+/g, 'Heavy ').replace(/-/g, 'Light ')
+          .replace(/VC/g, 'In Vicinity ')
+          .replace(/TSRA/g, 'Thunderstorm/Rain').replace(/TSSN/g, 'Thunderstorm/Snow')
+          .replace(/SHRA/g, 'Rain Showers').replace(/SHSN/g, 'Snow Showers')
+          .replace(/SHGR/g, 'Hail Showers')
+          .replace(/TS/g, 'Thunderstorm')
+          .replace(/RA/g, 'Rain').replace(/SN/g, 'Snow').replace(/DZ/g, 'Drizzle')
+          .replace(/GR/g, 'Hail').replace(/PL/g, 'Ice Pellets').replace(/IC/g, 'Ice Crystals')
+          .replace(/FG/g, 'Fog').replace(/BR/g, 'Mist').replace(/HZ/g, 'Haze')
+          .replace(/FU/g, 'Smoke').replace(/SA/g, 'Sand').replace(/DU/g, 'Dust')
+          .replace(/SQ/g, 'Squall').replace(/FC/g, 'Funnel Cloud');
+      }
+
+      function fmtSky(clouds) {
+        if (!clouds || !clouds.length) return 'Clear';
+        return clouds.map(c => `${coverMap[c.cover] || c.cover} @ ${Number(c.base).toLocaleString()}'`).join(', ');
+      }
+
+      return taf.forecast.map((f, i) => {
+        const prob      = f.chc ? `PROB${f.chc} ` : '';
+        const change    = f.fcstChange || (i === 0 ? 'Initial' : 'FM');
+        const label     = prob + change;
+        const cat       = fltCat(f.visib, f.clouds);
+        const color     = catColors[cat] || '#94a3b8';
+        const bg        = catBgs[cat]    || 'transparent';
+        const wind      = fmtWind(f.wdir, f.wspd, f.wgst);
+        const vis       = f.visib != null ? `${f.visib} SM` : '—';
+        const sky       = fmtSky(f.clouds);
+        const wx        = f.wxString ? decodeWx(f.wxString) : '';
+        const timeRange = `${fmtTime(f.timeFrom)} → ${fmtTime(f.timeTo)}`;
+
+        return `
+          <div style="background:${bg};border:1px solid ${color}33;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:${color};border:1px solid ${color}55;border-radius:4px;padding:2px 7px;">${label}</span>
+                <span style="font-size:11px;font-weight:700;color:${color};">${cat}</span>
+              </div>
+              <span style="font-size:10px;color:var(--dim);">${timeRange}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:52px 1fr;gap:3px 10px;font-size:12px;">
+              <span style="color:var(--muted);">Wind</span><span style="color:var(--text);">${wind}</span>
+              <span style="color:var(--muted);">Vis</span><span style="color:var(--text);">${vis}</span>
+              <span style="color:var(--muted);">Sky</span><span style="color:var(--text);">${sky}</span>
+              ${wx ? `<span style="color:var(--muted);">Wx</span><span style="color:#fcd34d;font-weight:600;">${wx}</span>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
     function renderWeather(m, taf) {
       const catColors = { VFR:'#6ee7b7', MVFR:'#93c5fd', IFR:'#f87171', LIFR:'#f0abfc' };
       const catBgs    = { VFR:'rgba(16,185,129,0.12)', MVFR:'rgba(37,99,235,0.12)', IFR:'rgba(239,68,68,0.12)', LIFR:'rgba(217,70,239,0.12)' };
@@ -1762,10 +1844,14 @@
           <div class="wx-raw">${m.rawOb || m.metar || '—'}</div>`;
       }
 
-      const tafHtml = taf?.rawTAF ? `
+      const tafHtml = taf ? `
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">TAF</div>
-          <div class="wx-raw" style="line-height:1.7;white-space:pre-wrap;">${taf.rawTAF}</div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">TAF — Decoded Forecast</div>
+          ${decodeTAF(taf)}
+          <details style="margin-top:8px;">
+            <summary style="font-size:10px;color:var(--dim);cursor:pointer;">Raw TAF</summary>
+            <div class="wx-raw" style="margin-top:6px;line-height:1.7;white-space:pre-wrap;">${taf.rawTAF || '—'}</div>
+          </details>
         </div>` : '';
 
       document.getElementById('weatherWidget').innerHTML = metarHtml + tafHtml;
