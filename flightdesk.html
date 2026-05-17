@@ -586,7 +586,7 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="user-card" style="margin-bottom:8px;cursor:pointer;" onclick="showSchoolPicker()" title="Switch school">
+      <div id="sidebarSchoolCard" class="user-card" style="margin-bottom:8px;cursor:pointer;" onclick="showSchoolPicker()" title="Switch school">
         <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Flight School</div>
         <div id="sidebarSchoolName" style="font-size:12px;font-weight:600;color:#93c5fd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
         <div id="sidebarSchoolLoc" style="font-size:10px;color:var(--dim);margin-top:1px;">—</div>
@@ -1082,9 +1082,16 @@
     function applySidebarSchool() {
       document.getElementById('sidebarSchoolName').textContent = currentSchool?.name || '—';
       document.getElementById('sidebarSchoolLoc').textContent  = currentSchool?.location || '';
+      const card = document.getElementById('sidebarSchoolCard');
+      if (user.role === 'admin') {
+        card.style.cursor = 'default';
+        card.removeAttribute('onclick');
+        card.removeAttribute('title');
+      }
     }
 
     async function showSchoolPicker() {
+      if (user.role === 'admin' && currentSchool) return;
       document.getElementById('schoolPickerOverlay').style.display = 'flex';
       if (user.role === 'admin') document.getElementById('adminSchoolSection').style.display = '';
       await loadSchools();
