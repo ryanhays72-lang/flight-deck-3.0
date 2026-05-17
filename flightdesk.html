@@ -473,6 +473,48 @@
     .empty-icon { margin-bottom: 12px; opacity: 0.4; }
     .empty-state p { font-size: 13px; }
 
+    /* ── Availability grid ── */
+    .avail-table { width: 100%; border-collapse: collapse; min-width: 500px; }
+    .avail-table th {
+      background: var(--surface);
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      white-space: nowrap;
+    }
+    .avail-table th:first-child { text-align: left; min-width: 80px; }
+    .avail-table td {
+      padding: 0;
+      border: 1px solid rgba(26,45,74,0.35);
+      height: 38px;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .avail-table td:first-child {
+      padding: 0 12px;
+      text-align: left;
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      border-left: none;
+    }
+    .avail-cell-free {
+      background: rgba(16,185,129,0.07);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .avail-cell-free:hover { background: rgba(16,185,129,0.2); }
+    .avail-cell-booked   { background: rgba(37,99,235,0.12); }
+    .avail-cell-pending  { background: rgba(245,158,11,0.1); }
+    .avail-cell-past     { background: rgba(26,45,74,0.25); }
+    .avail-cell-label    { font-size: 10px; font-weight: 700; line-height: 1.3; }
+
     /* ── Aircraft detail modal ── */
     .ac-detail-header {
       display: flex;
@@ -635,6 +677,11 @@
         Renters
       </div>
 
+      <div class="nav-item" id="nav-availability" onclick="showSection('availability')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Availability
+      </div>
+
       <div class="nav-item" id="nav-preflight" onclick="showSection('preflight')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         Preflight
@@ -775,6 +822,30 @@
             <thead><tr><th>Name</th><th>Email</th></tr></thead>
             <tbody id="instructorsBody"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Availability -->
+      <div class="section" id="section-availability">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Aircraft Availability</h3>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="shiftAvailDate(-1)">‹ Prev</button>
+              <input type="date" id="availDate" onchange="renderAvailability()"
+                style="background:var(--elevated);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;">
+              <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="shiftAvailDate(1)">Next ›</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;padding:0;">
+            <table class="avail-table" id="availGrid"></table>
+          </div>
+          <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:11px;color:var(--muted);">
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(16,185,129,0.2);margin-right:5px;vertical-align:middle;"></span>Available</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(37,99,235,0.2);margin-right:5px;vertical-align:middle;"></span>Booked</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(245,158,11,0.15);margin-right:5px;vertical-align:middle;"></span>Pending Approval</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(26,45,74,0.4);margin-right:5px;vertical-align:middle;"></span>Past</span>
+          </div>
         </div>
       </div>
 
@@ -987,7 +1058,7 @@
       </div>
       <div class="form-group"><label>Aircraft</label><select id="fAircraft"></select></div>
       <div class="form-group"><label>Date</label><input type="date" id="fDate"></div>
-      <div class="form-group"><label>Time</label><input type="time" id="fTime"></div>
+      <div class="form-group"><label>Time</label><select id="fTime"></select></div>
       <div class="form-group"><label>Duration (hours)</label><input type="number" id="fDuration" value="1.5" step="0.5" min="0.5"></div>
       <div class="form-error" id="flightError"></div>
       <div class="modal-actions">
@@ -1799,14 +1870,15 @@
     }
 
     const sections = {
-      overview:     { title: 'Overview',     subtitle: 'Flight school at a glance' },
-      flights:      { title: 'Flights',      subtitle: 'View and manage all flights' },
-      students:     { title: 'Students',     subtitle: 'Student roster' },
-      aircraft:     { title: 'Aircraft',     subtitle: 'Fleet management' },
-      instructors:  { title: 'Instructors',  subtitle: 'Instructor roster' },
-      renters:      { title: 'Renters',      subtitle: 'Aircraft renters' },
-      maintenance:  { title: 'Maintenance',  subtitle: 'Aircraft maintenance log' },
-      preflight:    { title: 'Preflight',    subtitle: 'Pre-flight assessment records' },
+      overview:     { title: 'Overview',      subtitle: 'Flight school at a glance' },
+      flights:      { title: 'Flights',       subtitle: 'View and manage all flights' },
+      availability: { title: 'Availability',  subtitle: 'Aircraft schedule by time slot' },
+      students:     { title: 'Students',      subtitle: 'Student roster' },
+      aircraft:     { title: 'Aircraft',      subtitle: 'Fleet management' },
+      instructors:  { title: 'Instructors',   subtitle: 'Instructor roster' },
+      renters:      { title: 'Renters',       subtitle: 'Aircraft renters' },
+      maintenance:  { title: 'Maintenance',   subtitle: 'Aircraft maintenance log' },
+      preflight:    { title: 'Preflight',     subtitle: 'Pre-flight assessment records' },
     };
 
     function showSection(name) {
@@ -1817,6 +1889,11 @@
       document.getElementById('pageTitle').textContent = sections[name].title;
       document.getElementById('pageSubtitle').textContent = sections[name].subtitle;
       if (name === 'flights')     renderFlights();
+      if (name === 'availability') {
+        const el = document.getElementById('availDate');
+        if (!el.value) el.value = new Date().toISOString().split('T')[0];
+        renderAvailability();
+      }
       if (name === 'students')    renderStudents();
       if (name === 'aircraft')    renderAircraft();
       if (name === 'instructors') renderInstructors();
@@ -1906,6 +1983,8 @@
         document.getElementById('fAircraft').innerHTML =
           aircraft.map(a => `<option value="${a.id}">${a.n_number} — ${a.model}</option>`).join('');
         document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('fTime').innerHTML =
+          timeSlots().map(t => `<option value="${t}">${fmt12(t)}</option>`).join('');
         document.getElementById('flightError').textContent = '';
       }
       document.getElementById(`modal-${type}`).classList.add('open');
@@ -1920,6 +1999,95 @@
     document.querySelectorAll('.modal-overlay').forEach(o => {
       o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
     });
+
+    function timeSlots() {
+      const slots = [];
+      for (let h = 6; h <= 21; h++) {
+        slots.push(`${String(h).padStart(2,'0')}:00`);
+        slots.push(`${String(h).padStart(2,'0')}:30`);
+      }
+      return slots;
+    }
+
+    function fmt12(t) {
+      const [h, m] = t.split(':').map(Number);
+      return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+    }
+
+    function shiftAvailDate(days) {
+      const el = document.getElementById('availDate');
+      const d  = new Date(el.value || new Date().toISOString().split('T')[0]);
+      d.setDate(d.getDate() + days);
+      el.value = d.toISOString().split('T')[0];
+      renderAvailability();
+    }
+
+    function renderAvailability() {
+      const date    = document.getElementById('availDate').value;
+      const today   = new Date().toISOString().split('T')[0];
+      const nowMin  = new Date().getHours() * 60 + new Date().getMinutes();
+      const slots   = timeSlots();
+
+      if (!aircraft.length) {
+        document.getElementById('availGrid').innerHTML =
+          '<tr><td style="padding:24px;color:var(--dim);">No aircraft in fleet.</td></tr>';
+        return;
+      }
+
+      let html = '<thead><tr><th>Time</th>';
+      aircraft.forEach(a => {
+        html += `<th>${a.n_number}<div style="font-size:10px;font-weight:500;color:var(--dim);text-transform:none;letter-spacing:0;">${a.model}</div></th>`;
+      });
+      html += '</tr></thead><tbody>';
+
+      slots.forEach(slot => {
+        const [h, m] = slot.split(':').map(Number);
+        const slotMin = h * 60 + m;
+        const isPast  = date === today && slotMin < nowMin;
+        const timeLabel = fmt12(slot);
+
+        html += `<tr><td style="color:${isPast ? 'var(--dim)' : 'var(--text)'};">${timeLabel}</td>`;
+
+        aircraft.forEach(a => {
+          const flight = flights.find(f =>
+            f.aircraft_id === a.id &&
+            f.date === date &&
+            f.time === slot &&
+            f.status !== 'cancelled'
+          );
+
+          if (isPast) {
+            html += `<td class="avail-cell-past"></td>`;
+          } else if (flight) {
+            const pilot = pilotName(flight.student_id);
+            const instr = flight.instructor_id ? `<div style="color:var(--dim);">${instructorName(flight.instructor_id)}</div>` : '';
+            const isPending = flight.status === 'pending_approval';
+            html += `<td class="${isPending ? 'avail-cell-pending' : 'avail-cell-booked'}">
+              <div class="avail-cell-label" style="color:${isPending ? '#fcd34d' : '#93c5fd'};">${pilot}</div>
+              ${instr}
+            </td>`;
+          } else {
+            html += `<td class="avail-cell-free" onclick="quickBook('${a.id}','${slot}','${date}')">
+              <div class="avail-cell-label" style="color:#6ee7b7;">Open</div>
+            </td>`;
+          }
+        });
+
+        html += '</tr>';
+      });
+
+      html += '</tbody>';
+      document.getElementById('availGrid').innerHTML = html;
+    }
+
+    function quickBook(aircraftId, time, date) {
+      openModal('flight');
+      setTimeout(() => {
+        document.getElementById('fDate').value = date;
+        document.getElementById('fTime').value = time;
+        document.getElementById('fAircraft').value = aircraftId;
+      }, 0);
+    }
 
     function updateApprovalNotice() {
       const isSelfBooker = user.role === 'student' || user.role === 'renter';
