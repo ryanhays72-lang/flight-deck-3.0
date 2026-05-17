@@ -636,12 +636,7 @@
           <div class="table-card" style="display:flex;flex-direction:column;">
             <div class="table-header">
               <h3>Airport Weather</h3>
-              <div style="display:flex;gap:6px;align-items:center;">
-                <input id="airportIdInput" type="text" placeholder="KXXX" maxlength="4"
-                  style="width:68px;padding:5px 8px;background:var(--elevated);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;text-transform:uppercase;outline:none;letter-spacing:0.08em;"
-                  onkeydown="if(event.key==='Enter') fetchWeather()">
-                <button onclick="fetchWeather()" class="btn btn-secondary" style="padding:5px 10px;font-size:11px;">Load</button>
-              </div>
+              <span id="wxAirportLabel" style="font-size:12px;font-weight:700;color:#93c5fd;letter-spacing:0.1em;font-family:monospace;"></span>
             </div>
             <div id="weatherWidget" style="padding:20px;flex:1;"></div>
           </div>
@@ -1039,8 +1034,12 @@
             <input type="text" id="newSchoolName" placeholder="e.g. Skybound Aviation">
           </div>
           <div class="form-group">
+            <label>Home Airport (ICAO)</label>
+            <input type="text" id="newSchoolAirport" placeholder="e.g. KORL" maxlength="4" style="text-transform:uppercase;">
+          </div>
+          <div class="form-group">
             <label>Location (optional)</label>
-            <input type="text" id="newSchoolLocation" placeholder="e.g. Phoenix, AZ">
+            <input type="text" id="newSchoolLocation" placeholder="e.g. Orlando, FL">
           </div>
           <div class="form-error" id="createSchoolError"></div>
           <div style="display:flex;gap:10px;margin-top:4px;">
@@ -1139,13 +1138,15 @@
     }
 
     async function createSchool() {
-      const name     = document.getElementById('newSchoolName').value.trim();
-      const location = document.getElementById('newSchoolLocation').value.trim();
-      if (!name) { document.getElementById('createSchoolError').textContent = 'School name is required.'; return; }
+      const name        = document.getElementById('newSchoolName').value.trim();
+      const homeAirport = document.getElementById('newSchoolAirport').value.trim().toUpperCase();
+      const location    = document.getElementById('newSchoolLocation').value.trim();
+      if (!name)        { document.getElementById('createSchoolError').textContent = 'School name is required.'; return; }
+      if (!homeAirport) { document.getElementById('createSchoolError').textContent = 'Home airport is required.'; return; }
       const res  = await fetch(`${API}/api/schools`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, location })
+        body: JSON.stringify({ name, homeAirport, location })
       });
       const data = await res.json();
       if (!res.ok) { document.getElementById('createSchoolError').textContent = data.error; return; }
@@ -1262,14 +1263,14 @@
       renderUpcomingFlights();
       renderInspectionStatus();
 
-      // Restore saved airport and load weather
-      const saved = localStorage.getItem('airportId');
-      if (saved) {
-        document.getElementById('airportIdInput').value = saved;
-        fetchWeather();
+      // Auto-load weather from school's home airport
+      const icao = currentSchool?.home_airport;
+      if (icao) {
+        document.getElementById('wxAirportLabel').textContent = icao;
+        fetchWeather(icao);
       } else {
         document.getElementById('weatherWidget').innerHTML =
-          '<div class="wx-placeholder">Enter an airport identifier<br>above to load METAR data.</div>';
+          '<div class="wx-placeholder">No home airport set for this school.<br>Contact your admin to configure one.</div>';
       }
     }
 
@@ -1457,62 +1458,72 @@
     }
 
     // ── Weather ───────────────────────────────────────
-    async function fetchWeather() {
-      const id = document.getElementById('airportIdInput').value.trim().toUpperCase();
-      if (!id || id.length < 3) return;
-      localStorage.setItem('airportId', id);
-
+    async function fetchWeather(icao) {
+      if (!icao) return;
       const widget = document.getElementById('weatherWidget');
-      widget.innerHTML = '<div class="wx-placeholder">Loading METAR...</div>';
-
+      widget.innerHTML = '<div class="wx-placeholder">Loading weather...</div>';
       try {
-        const res  = await fetch(`${API}/api/weather/${id}`);
+        const res  = await fetch(`${API}/api/weather/${icao}`);
         const data = await res.json();
-
-        if (!data || !data.length) {
-          widget.innerHTML = '<div class="wx-placeholder" style="color:#f87171;">Airport not found.<br>Check the identifier and try again.</div>';
+        if (data.error) {
+          widget.innerHTML = `<div class="wx-placeholder" style="color:#f87171;">${data.error}</div>`;
           return;
         }
-        renderWeather(data[0]);
+        const metar = data.metar?.[0];
+        const taf   = data.taf?.[0];
+        if (!metar && !taf) {
+          widget.innerHTML = '<div class="wx-placeholder" style="color:#f87171;">No weather data found for this airport.</div>';
+          return;
+        }
+        renderWeather(metar, taf);
       } catch (e) {
         widget.innerHTML = '<div class="wx-placeholder" style="color:#f87171;">Could not load weather.<br>Check your connection.</div>';
       }
     }
 
-    function renderWeather(m) {
+    function renderWeather(m, taf) {
       const catColors = { VFR:'#6ee7b7', MVFR:'#93c5fd', IFR:'#f87171', LIFR:'#f0abfc' };
       const catBgs    = { VFR:'rgba(16,185,129,0.12)', MVFR:'rgba(37,99,235,0.12)', IFR:'rgba(239,68,68,0.12)', LIFR:'rgba(217,70,239,0.12)' };
-      const cat       = m.fltcat || 'VFR';
-      const catColor  = catColors[cat] || '#94a3b8';
-      const catBg     = catBgs[cat]    || 'transparent';
 
-      const wind = (!m.wspd || m.wspd === 0)
-        ? 'Calm'
-        : `${String(m.wdir || 0).padStart(3,'0')}° @ ${m.wspd}kt${m.wgst ? ' G' + m.wgst + 'kt' : ''}`;
-
-      const vis    = m.visib  ? `${m.visib} SM`          : '—';
-      const temp   = m.temp  != null ? `${m.temp}°C`     : '—';
-      const dewp   = m.dewp  != null ? `${m.dewp}°C`     : '—';
-      const altim  = m.altim != null ? `${parseFloat(m.altim).toFixed(2)}" Hg` : '—';
-      const sky    = (m.clouds||[]).map(c=>`${c.cover} @ ${Number(c.base).toLocaleString()}'`).join('  ') || 'Clear';
-      const obs    = m.obsTime ? new Date(m.obsTime*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-
-      document.getElementById('weatherWidget').innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div class="wx-cat" style="background:${catBg};border:1px solid ${catColor};color:${catColor};">${cat}</div>
-          <div>
-            <div style="font-size:14px;font-weight:800;color:var(--text);">${m.icaoId || ''}</div>
-            <div style="font-size:11px;color:var(--muted);">${m.name || ''}</div>
-            ${obs ? `<div style="font-size:10px;color:var(--dim);margin-top:2px;">Observed ${obs}</div>` : ''}
+      let metarHtml = '';
+      if (m) {
+        const cat      = m.fltcat || 'VFR';
+        const catColor = catColors[cat] || '#94a3b8';
+        const catBg    = catBgs[cat]    || 'transparent';
+        const wind     = (!m.wspd || m.wspd === 0)
+          ? 'Calm'
+          : `${String(m.wdir || 0).padStart(3,'0')}° @ ${m.wspd}kt${m.wgst ? ' G' + m.wgst + 'kt' : ''}`;
+        const vis   = m.visib  ? `${m.visib} SM`                         : '—';
+        const temp  = m.temp  != null ? `${m.temp}°C`                    : '—';
+        const dewp  = m.dewp  != null ? `${m.dewp}°C`                    : '—';
+        const altim = m.altim != null ? `${parseFloat(m.altim).toFixed(2)}" Hg` : '—';
+        const sky   = (m.clouds||[]).map(c=>`${c.cover} @ ${Number(c.base).toLocaleString()}'`).join('  ') || 'Clear';
+        const obs   = m.obsTime ? new Date(m.obsTime*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+        metarHtml = `
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+            <div class="wx-cat" style="background:${catBg};border:1px solid ${catColor};color:${catColor};">${cat}</div>
+            <div>
+              <div style="font-size:14px;font-weight:800;color:var(--text);">${m.icaoId || ''}</div>
+              <div style="font-size:11px;color:var(--muted);">${m.name || ''}</div>
+              ${obs ? `<div style="font-size:10px;color:var(--dim);margin-top:2px;">Observed ${obs}</div>` : ''}
+            </div>
           </div>
-        </div>
-        <div class="wx-row"><span class="wx-label">Wind</span><span class="wx-val">${wind}</span></div>
-        <div class="wx-row"><span class="wx-label">Visibility</span><span class="wx-val">${vis}</span></div>
-        <div class="wx-row"><span class="wx-label">Sky</span><span class="wx-val">${sky}</span></div>
-        <div class="wx-row"><span class="wx-label">Temp / Dew</span><span class="wx-val">${temp} / ${dewp}</span></div>
-        <div class="wx-row"><span class="wx-label">Altimeter</span><span class="wx-val">${altim}</span></div>
-        ${m.wxString ? `<div class="wx-row"><span class="wx-label">Wx</span><span class="wx-val">${m.wxString}</span></div>` : ''}
-        <div class="wx-raw">${m.rawOb || m.metar || '—'}</div>`;
+          <div class="wx-row"><span class="wx-label">Wind</span><span class="wx-val">${wind}</span></div>
+          <div class="wx-row"><span class="wx-label">Visibility</span><span class="wx-val">${vis}</span></div>
+          <div class="wx-row"><span class="wx-label">Sky</span><span class="wx-val">${sky}</span></div>
+          <div class="wx-row"><span class="wx-label">Temp / Dew</span><span class="wx-val">${temp} / ${dewp}</span></div>
+          <div class="wx-row"><span class="wx-label">Altimeter</span><span class="wx-val">${altim}</span></div>
+          ${m.wxString ? `<div class="wx-row"><span class="wx-label">Wx</span><span class="wx-val">${m.wxString}</span></div>` : ''}
+          <div class="wx-raw">${m.rawOb || m.metar || '—'}</div>`;
+      }
+
+      const tafHtml = taf?.rawTAF ? `
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">TAF</div>
+          <div class="wx-raw" style="line-height:1.7;white-space:pre-wrap;">${taf.rawTAF}</div>
+        </div>` : '';
+
+      document.getElementById('weatherWidget').innerHTML = metarHtml + tafHtml;
     }
 
     function renderFlights() {

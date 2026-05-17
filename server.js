@@ -33,11 +33,16 @@ app.get('/api/schools', async (req, res) => {
 });
 
 app.post('/api/schools', async (req, res) => {
-  const { name, location } = req.body;
+  const { name, location, homeAirport } = req.body;
   if (!name) return res.status(400).json({ error: 'School name is required' });
   const { data, error } = await supabase
     .from('flight_schools')
-    .insert([{ id: crypto.randomUUID(), name, location: location || null }])
+    .insert([{
+      id: crypto.randomUUID(),
+      name,
+      location: location || null,
+      home_airport: homeAirport ? homeAirport.toUpperCase() : null
+    }])
     .select();
   if (error) return res.status(400).json({ error: error.message });
   res.json(data[0]);
@@ -340,12 +345,13 @@ app.post('/api/maintenance', async (req, res) => {
 app.get('/api/weather/:icao', async (req, res) => {
   const icao = req.params.icao.toUpperCase();
   try {
-    const response = await fetch(
-      `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`
-    );
-    if (!response.ok) return res.status(response.status).json({ error: 'Weather service error' });
-    const data = await response.json();
-    res.json(data);
+    const [metarRes, tafRes] = await Promise.all([
+      fetch(`https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`),
+      fetch(`https://aviationweather.gov/api/data/taf?ids=${icao}&format=json`)
+    ]);
+    const metar = metarRes.ok ? await metarRes.json() : [];
+    const taf   = tafRes.ok  ? await tafRes.json()   : [];
+    res.json({ metar, taf });
   } catch (err) {
     res.status(500).json({ error: 'Could not reach weather service' });
   }
