@@ -17,9 +17,8 @@ const supabase = createClient(
   
 );
 
-// TEST ROUTE
 app.get('/', (req, res) => {
-  res.send('FlightDeck server is working');
+  res.sendFile('LOGIN.HTML', { root: '.' });
 });
 
 // =======================
