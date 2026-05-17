@@ -472,6 +472,57 @@
     .empty-state { text-align: center; padding: 48px 20px; color: var(--dim); }
     .empty-icon { margin-bottom: 12px; opacity: 0.4; }
     .empty-state p { font-size: 13px; }
+
+    /* ── School picker overlay ── */
+    #schoolPickerOverlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .school-picker-card {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 36px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    }
+    .school-picker-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .school-picker-logo .logo-icon { width: 32px; height: 32px; }
+    .school-picker-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; letter-spacing: -0.2px; }
+    .school-picker-sub   { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+    .school-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; }
+    .school-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .school-item:hover { border-color: var(--blue); background: var(--blue-dim); }
+    .school-item-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .school-item-loc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .school-item-arrow { color: var(--dim); font-size: 18px; }
+    .school-empty { color: var(--dim); font-size: 13px; text-align: center; padding: 20px 0; }
+    .school-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+    .school-divider-line { flex: 1; height: 1px; background: var(--border); }
+    .school-divider-text { font-size: 11px; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    #createSchoolForm { display: none; margin-top: 16px; }
   </style>
 </head>
 <body>
@@ -535,6 +586,11 @@
     </div>
 
     <div class="sidebar-footer">
+      <div class="user-card" style="margin-bottom:8px;cursor:pointer;" onclick="showSchoolPicker()" title="Switch school">
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Flight School</div>
+        <div id="sidebarSchoolName" style="font-size:12px;font-weight:600;color:#93c5fd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+        <div id="sidebarSchoolLoc" style="font-size:10px;color:var(--dim);margin-top:1px;">—</div>
+      </div>
       <div class="user-card">
         <div class="user-name" id="sidebarName">—</div>
         <div class="user-role" id="sidebarRole">—</div>
@@ -953,9 +1009,53 @@
     </div>
   </div>
 
+  <!-- School Picker Overlay -->
+  <div id="schoolPickerOverlay" style="display:none;">
+    <div class="school-picker-card">
+      <div class="school-picker-logo">
+        <div class="logo-icon" style="width:32px;height:32px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+        </div>
+        <div style="font-size:13px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#f1f5f9;">Flight Deck</div>
+      </div>
+
+      <div class="school-picker-title">Select Your Flight School</div>
+      <div class="school-picker-sub">Choose the school you want to manage. Your data is kept separate per school.</div>
+
+      <div class="school-list" id="schoolList">
+        <div class="school-empty">Loading schools...</div>
+      </div>
+
+      <div id="adminSchoolSection" style="display:none;">
+        <div class="school-divider">
+          <div class="school-divider-line"></div>
+          <div class="school-divider-text">Admin</div>
+          <div class="school-divider-line"></div>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;justify-content:center;" onclick="toggleCreateSchoolForm()">+ Create New Flight School</button>
+        <div id="createSchoolForm">
+          <div class="form-group" style="margin-top:14px;">
+            <label>School Name</label>
+            <input type="text" id="newSchoolName" placeholder="e.g. Skybound Aviation">
+          </div>
+          <div class="form-group">
+            <label>Location (optional)</label>
+            <input type="text" id="newSchoolLocation" placeholder="e.g. Phoenix, AZ">
+          </div>
+          <div class="form-error" id="createSchoolError"></div>
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="btn btn-secondary" style="flex:1;" onclick="toggleCreateSchoolForm()">Cancel</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="createSchool()">Create School</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API = '';
     let user = null;
+    let currentSchool = null;
     let flights = [], students = [], aircraft = [], instructors = [], renters = [], maintenance = [], preflights = [];
 
     function init() {
@@ -968,7 +1068,87 @@
       document.getElementById('pageSubtitle').textContent = `Welcome back, ${user.firstName}`;
 
       applyRoleUI();
+
+      const savedSchool = localStorage.getItem('currentSchool');
+      if (savedSchool) {
+        currentSchool = JSON.parse(savedSchool);
+        applySidebarSchool();
+        loadAll();
+      } else {
+        showSchoolPicker();
+      }
+    }
+
+    function applySidebarSchool() {
+      document.getElementById('sidebarSchoolName').textContent = currentSchool?.name || '—';
+      document.getElementById('sidebarSchoolLoc').textContent  = currentSchool?.location || '';
+    }
+
+    async function showSchoolPicker() {
+      document.getElementById('schoolPickerOverlay').style.display = 'flex';
+      if (user.role === 'admin') document.getElementById('adminSchoolSection').style.display = '';
+      await loadSchools();
+    }
+
+    async function loadSchools() {
+      const listEl = document.getElementById('schoolList');
+      listEl.innerHTML = '<div class="school-empty">Loading...</div>';
+      try {
+        const res = await fetch(`${API}/api/schools`);
+        const schools = await res.json();
+        if (!schools.length) {
+          listEl.innerHTML = user.role === 'admin'
+            ? '<div class="school-empty">No schools yet. Create one below.</div>'
+            : '<div class="school-empty">No flight schools available. Ask your admin to create one.</div>';
+          return;
+        }
+        listEl.innerHTML = schools.map(s => `
+          <div class="school-item" onclick="selectSchool(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+            <div>
+              <div class="school-item-name">${s.name}</div>
+              ${s.location ? `<div class="school-item-loc">${s.location}</div>` : ''}
+            </div>
+            <div class="school-item-arrow">›</div>
+          </div>`).join('');
+      } catch {
+        listEl.innerHTML = '<div class="school-empty" style="color:#f87171;">Could not load schools.</div>';
+      }
+    }
+
+    function selectSchool(school) {
+      currentSchool = school;
+      localStorage.setItem('currentSchool', JSON.stringify(school));
+      document.getElementById('schoolPickerOverlay').style.display = 'none';
+      applySidebarSchool();
       loadAll();
+    }
+
+    function toggleCreateSchoolForm() {
+      const form = document.getElementById('createSchoolForm');
+      form.style.display = form.style.display === 'none' ? '' : 'none';
+      document.getElementById('createSchoolError').textContent = '';
+      document.getElementById('newSchoolName').value = '';
+      document.getElementById('newSchoolLocation').value = '';
+    }
+
+    async function createSchool() {
+      const name     = document.getElementById('newSchoolName').value.trim();
+      const location = document.getElementById('newSchoolLocation').value.trim();
+      if (!name) { document.getElementById('createSchoolError').textContent = 'School name is required.'; return; }
+      const res  = await fetch(`${API}/api/schools`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, location })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('createSchoolError').textContent = data.error; return; }
+      toggleCreateSchoolForm();
+      await loadSchools();
+      selectSchool(data);
+    }
+
+    function schoolQ() {
+      return currentSchool ? `?school_id=${currentSchool.id}` : '';
     }
 
     function applyRoleUI() {
@@ -985,13 +1165,13 @@
       renderOverview();
     }
 
-    async function fetchFlights()     { try { const r = await fetch(`${API}/api/flights`);     flights     = await r.json(); } catch { flights     = []; } }
-    async function fetchStudents()    { try { const r = await fetch(`${API}/api/students`);    students    = await r.json(); } catch { students    = []; } }
-    async function fetchAircraft()    { try { const r = await fetch(`${API}/api/aircraft`);    aircraft    = await r.json(); } catch { aircraft    = []; } }
-    async function fetchInstructors() { try { const r = await fetch(`${API}/api/instructors`); instructors = await r.json(); } catch { instructors = []; } }
-    async function fetchRenters()      { try { const r = await fetch(`${API}/api/renters`);      renters      = await r.json(); } catch { renters      = []; } }
-    async function fetchMaintenance()  { try { const r = await fetch(`${API}/api/maintenance`);  maintenance  = await r.json(); } catch { maintenance  = []; } }
-    async function fetchPreflights()   { try { const r = await fetch(`${API}/api/preflight`);     preflights   = await r.json(); } catch { preflights   = []; } }
+    async function fetchFlights()     { try { const r = await fetch(`${API}/api/flights${schoolQ()}`);     flights     = await r.json(); } catch { flights     = []; } }
+    async function fetchStudents()    { try { const r = await fetch(`${API}/api/students${schoolQ()}`);    students    = await r.json(); } catch { students    = []; } }
+    async function fetchAircraft()    { try { const r = await fetch(`${API}/api/aircraft${schoolQ()}`);    aircraft    = await r.json(); } catch { aircraft    = []; } }
+    async function fetchInstructors() { try { const r = await fetch(`${API}/api/instructors${schoolQ()}`); instructors = await r.json(); } catch { instructors = []; } }
+    async function fetchRenters()     { try { const r = await fetch(`${API}/api/renters${schoolQ()}`);     renters     = await r.json(); } catch { renters     = []; } }
+    async function fetchMaintenance() { try { const r = await fetch(`${API}/api/maintenance${schoolQ()}`); maintenance = await r.json(); } catch { maintenance = []; } }
+    async function fetchPreflights()  { try { const r = await fetch(`${API}/api/preflight${schoolQ()}`);   preflights  = await r.json(); } catch { preflights  = []; } }
 
     function pilotName(id) {
       const s = students.find(s => s.id === id);
@@ -1608,7 +1788,7 @@
       const time         = document.getElementById('fTime').value;
       const duration     = parseFloat(document.getElementById('fDuration').value);
       if (!studentId || !aircraftId || !date || !time) { document.getElementById('flightError').textContent = 'Please fill in all required fields.'; return; }
-      const res = await fetch(`${API}/api/flights`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentId, instructorId, aircraftId, date, time, duration }) });
+      const res = await fetch(`${API}/api/flights`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentId, instructorId, aircraftId, date, time, duration, schoolId: currentSchool?.id }) });
       const data = await res.json();
       if (!res.ok) { document.getElementById('flightError').textContent = data.error; return; }
       flights.push(data); closeModal('flight'); renderFlights(); renderOverview();
@@ -1661,7 +1841,7 @@
       const email     = document.getElementById('sEmail').value.trim();
       const stage     = document.getElementById('sStage').value;
       if (!firstName || !lastName || !email) { document.getElementById('studentError').textContent = 'Please fill in all fields.'; return; }
-      const res = await fetch(`${API}/api/students`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email, stage }) });
+      const res = await fetch(`${API}/api/students`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email, stage, schoolId: currentSchool?.id }) });
       const data = await res.json();
       if (!res.ok) { document.getElementById('studentError').textContent = data.error; return; }
       students.push(data); closeModal('student'); renderStudents(); renderOverview();
@@ -1672,7 +1852,7 @@
       const model   = document.getElementById('aModel').value.trim();
       const hobbs   = parseFloat(document.getElementById('aHobbs').value) || 0;
       if (!nNumber || !model) { document.getElementById('aircraftError').textContent = 'N-Number and model are required.'; return; }
-      const res = await fetch(`${API}/api/aircraft`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nNumber, model, hobbs }) });
+      const res = await fetch(`${API}/api/aircraft`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nNumber, model, hobbs, schoolId: currentSchool?.id }) });
       const data = await res.json();
       if (!res.ok) { document.getElementById('aircraftError').textContent = data.error; return; }
       aircraft.push(data); closeModal('aircraft'); renderAircraft(); renderOverview();
@@ -1683,7 +1863,7 @@
       const lastName  = document.getElementById('iLastName').value.trim();
       const email     = document.getElementById('iEmail').value.trim();
       if (!firstName || !lastName || !email) { document.getElementById('instructorError').textContent = 'Please fill in all fields.'; return; }
-      const res = await fetch(`${API}/api/instructors`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email }) });
+      const res = await fetch(`${API}/api/instructors`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email, schoolId: currentSchool?.id }) });
       const data = await res.json();
       if (!res.ok) { document.getElementById('instructorError').textContent = data.error; return; }
       instructors.push(data); closeModal('instructor'); renderInstructors(); renderOverview();
@@ -1716,7 +1896,8 @@
           studentId: user.id, aircraftId, date, time,
           fuelLeft, fuelRight, oilLevel,
           documentsOk, exteriorOk, cockpitOk, engineOk,
-          squawks, airworthy, studentName
+          squawks, airworthy, studentName,
+          schoolId: currentSchool?.id
         })
       });
       const data = await res.json();
@@ -1745,7 +1926,7 @@
       const res = await fetch(`${API}/api/maintenance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ aircraftId, type, description, performedBy, date, hobbsAtService, nextDue, status })
+        body: JSON.stringify({ aircraftId, type, description, performedBy, date, hobbsAtService, nextDue, status, schoolId: currentSchool?.id })
       });
       const data = await res.json();
       if (!res.ok) { document.getElementById('maintenanceError').textContent = data.error; return; }
@@ -1760,7 +1941,7 @@
       const lastName  = document.getElementById('rLastName').value.trim();
       const email     = document.getElementById('rEmail').value.trim();
       if (!firstName || !lastName || !email) { document.getElementById('renterError').textContent = 'Please fill in all fields.'; return; }
-      const res = await fetch(`${API}/api/renters`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email }) });
+      const res = await fetch(`${API}/api/renters`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, email, schoolId: currentSchool?.id }) });
       const data = await res.json();
       if (!res.ok) { document.getElementById('renterError').textContent = data.error; return; }
       renters.push(data); closeModal('renter'); renderRenters(); renderOverview();
