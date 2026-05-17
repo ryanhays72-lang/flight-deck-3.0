@@ -464,8 +464,9 @@
 
     .badge-completed  { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
     .badge-scheduled  { background: rgba(37,99,235,0.15);  color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
-    .badge-in-progress { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
-    .badge-overdue    { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+    .badge-in-progress        { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+    .badge-overdue            { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+    .badge-pending_approval   { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
 
     /* ── Empty state ── */
     .empty-state { text-align: center; padding: 48px 20px; color: var(--dim); }
@@ -601,6 +602,16 @@
 
       <!-- Flights -->
       <div class="section" id="section-flights">
+        <div id="pendingApprovalsCard" style="display:none;margin-bottom:16px;" class="table-card">
+          <div class="table-header">
+            <h3>Pending Approval Requests</h3>
+            <span id="pendingCount" class="badge badge-pending_approval"></span>
+          </div>
+          <table>
+            <thead><tr><th>Date</th><th>Time</th><th>Student</th><th>Instructor</th><th>Aircraft</th><th>Duration</th><th>Actions</th></tr></thead>
+            <tbody id="pendingBody"></tbody>
+          </table>
+        </div>
         <div class="table-card">
           <div class="table-header">
             <h3>All Flights</h3>
@@ -844,15 +855,24 @@
   <div class="modal-overlay" id="modal-flight">
     <div class="modal">
       <h2>Book a Flight</h2>
-      <div class="form-group">
+      <div id="fBookingAs" style="display:none;margin-bottom:14px;padding:10px 12px;background:var(--elevated);border:1px solid var(--border);border-radius:7px;font-size:13px;color:var(--muted);">
+        Booking as <strong style="color:var(--text);" id="fBookingAsName"></strong>
+      </div>
+      <div class="form-group" id="fPilotTypeGroup">
         <label>Pilot Type</label>
         <select id="fPilotType" onchange="updatePilotDropdown()">
           <option value="student">Student</option>
           <option value="renter">Renter</option>
         </select>
       </div>
-      <div class="form-group"><label id="fPilotLabel">Student</label><select id="fPilot"></select></div>
-      <div class="form-group"><label>Instructor (optional)</label><select id="fInstructor"></select></div>
+      <div class="form-group" id="fPilotGroup"><label id="fPilotLabel">Student</label><select id="fPilot"></select></div>
+      <div class="form-group">
+        <label>Instructor</label>
+        <select id="fInstructor" onchange="updateApprovalNotice()"></select>
+      </div>
+      <div id="fApprovalNotice" style="display:none;margin-bottom:14px;padding:10px 12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:7px;font-size:12px;color:#fcd34d;">
+        This request will be sent to the instructor for approval before it is confirmed.
+      </div>
       <div class="form-group"><label>Aircraft</label><select id="fAircraft"></select></div>
       <div class="form-group"><label>Date</label><input type="date" id="fDate"></div>
       <div class="form-group"><label>Time</label><input type="time" id="fTime"></div>
@@ -955,11 +975,7 @@
       if (user.role !== 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
       }
-      if (user.role === 'student') {
-        document.querySelectorAll('.hide-student').forEach(el => el.style.display = 'none');
-        document.getElementById('bookFlightBtn').style.display = 'none';
-      }
-      if (user.role === 'renter') {
+      if (user.role === 'student' || user.role === 'renter') {
         document.querySelectorAll('.hide-student').forEach(el => el.style.display = 'none');
       }
     }
@@ -1165,9 +1181,11 @@
         const logs        = maintenance.filter(m => m.aircraft_id === a.id);
         const currentHobbs = parseFloat(a.hobbs) || 0;
 
+        const typeMatch = (t, ...patterns) => patterns.some(p => (t||'').toLowerCase().replace(/[-_]/g,' ').includes(p));
+
         // 100-Hour
         const hundredLogs = logs
-          .filter(m => m.type === '100-Hour Inspection' && m.hobbs_at_service != null)
+          .filter(m => typeMatch(m.type, '100 hour', '100hr', '100-hour') && m.hobbs_at_service != null)
           .sort((x,y) => y.hobbs_at_service - x.hobbs_at_service);
         const last100 = hundredLogs[0];
         let hundredHtml;
@@ -1204,8 +1222,8 @@
 
         // Annual inspection
         const annualLogs = logs
-          .filter(m => m.type === 'Annual Inspection' && m.next_due)
-          .sort((x,y) => x.next_due > y.next_due ? 1 : -1);
+          .filter(m => typeMatch(m.type, 'annual') && m.next_due)
+          .sort((x,y) => y.next_due > x.next_due ? 1 : -1);
         const lastAnnual = annualLogs[0];
         let annualHtml = '';
         if (lastAnnual) {
@@ -1218,7 +1236,7 @@
         }
 
         // Oil change
-        const oilLogs = logs.filter(m => m.type === 'Oil Change').sort((x,y) => y.date > x.date ? 1 : -1);
+        const oilLogs = logs.filter(m => typeMatch(m.type, 'oil')).sort((x,y) => y.date > x.date ? 1 : -1);
         const lastOil = oilLogs[0];
         const oilHtml = `<div class="insp-row"><span class="insp-row-label">Last Oil Change</span><span class="insp-row-val" style="color:var(--text);">${lastOil ? lastOil.date : '—'}</span></div>`;
 
@@ -1227,7 +1245,7 @@
           .filter(m => m.next_due && m.next_due > today.toISOString().split('T')[0])
           .sort((x,y) => x.next_due > y.next_due ? 1 : -1);
         const nextDue = nextDueItems[0];
-        const nextDueHtml = nextDue && nextDue.type !== 'Annual Inspection'
+        const nextDueHtml = nextDue && !typeMatch(nextDue.type, 'annual')
           ? `<div class="insp-row"><span class="insp-row-label">Next Due</span><span class="insp-row-val" style="color:var(--muted);">${nextDue.type} &middot; ${nextDue.next_due}</span></div>`
           : '';
 
@@ -1311,6 +1329,7 @@
     }
 
     function renderFlights() {
+      renderPendingApprovals();
       document.getElementById('flightsBody').innerHTML = flightRows(
         [...myFlights()].sort((a, b) => b.date > a.date ? 1 : -1), 7
       );
@@ -1542,14 +1561,24 @@
         document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
       }
       if (type === 'flight') {
-        document.getElementById('fPilotType').value = 'student';
-        updatePilotDropdown();
+        const isSelfBooker = user.role === 'student' || user.role === 'renter';
+        document.getElementById('fPilotTypeGroup').style.display = isSelfBooker ? 'none' : '';
+        document.getElementById('fPilotGroup').style.display     = isSelfBooker ? 'none' : '';
+        document.getElementById('fBookingAs').style.display      = isSelfBooker ? '' : 'none';
+        document.getElementById('fApprovalNotice').style.display = 'none';
+        if (isSelfBooker) {
+          document.getElementById('fBookingAsName').textContent = `${user.firstName} ${user.lastName}`;
+        } else {
+          document.getElementById('fPilotType').value = 'student';
+          updatePilotDropdown();
+        }
         document.getElementById('fInstructor').innerHTML =
-          '<option value="">No instructor</option>' +
+          '<option value="">No instructor (solo rental)</option>' +
           instructors.map(i => `<option value="${i.id}">${i.first_name} ${i.last_name}</option>`).join('');
         document.getElementById('fAircraft').innerHTML =
           aircraft.map(a => `<option value="${a.id}">${a.n_number} — ${a.model}</option>`).join('');
         document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('flightError').textContent = '';
       }
       document.getElementById(`modal-${type}`).classList.add('open');
     }
@@ -1564,8 +1593,15 @@
       o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
     });
 
+    function updateApprovalNotice() {
+      const isSelfBooker = user.role === 'student' || user.role === 'renter';
+      const hasInstructor = document.getElementById('fInstructor').value !== '';
+      document.getElementById('fApprovalNotice').style.display = (isSelfBooker && hasInstructor) ? '' : 'none';
+    }
+
     async function bookFlight() {
-      const studentId    = document.getElementById('fPilot').value;
+      const isSelfBooker = user.role === 'student' || user.role === 'renter';
+      const studentId    = isSelfBooker ? user.id : document.getElementById('fPilot').value;
       const instructorId = document.getElementById('fInstructor').value || null;
       const aircraftId   = document.getElementById('fAircraft').value;
       const date         = document.getElementById('fDate').value;
@@ -1576,6 +1612,47 @@
       const data = await res.json();
       if (!res.ok) { document.getElementById('flightError').textContent = data.error; return; }
       flights.push(data); closeModal('flight'); renderFlights(); renderOverview();
+    }
+
+    async function updateFlightStatus(id, status) {
+      const res = await fetch(`${API}/api/flights/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error); return; }
+      const idx = flights.findIndex(f => f.id === id);
+      if (idx !== -1) flights[idx] = data;
+      renderFlights();
+      renderOverview();
+    }
+
+    function renderPendingApprovals() {
+      const card = document.getElementById('pendingApprovalsCard');
+      const canApprove = user.role === 'admin' || user.role === 'instructor';
+      const pending = flights.filter(f =>
+        f.status === 'pending_approval' &&
+        (user.role === 'admin' || (user.role === 'instructor' && f.instructor_id === user.id))
+      );
+      if (!canApprove || !pending.length) { card.style.display = 'none'; return; }
+      card.style.display = '';
+      document.getElementById('pendingCount').textContent = `${pending.length} pending`;
+      document.getElementById('pendingBody').innerHTML = pending
+        .sort((a, b) => a.date > b.date ? 1 : -1)
+        .map(f => `
+          <tr>
+            <td><strong>${f.date}</strong></td>
+            <td>${f.time}</td>
+            <td>${pilotName(f.student_id)}</td>
+            <td>${instructorName(f.instructor_id)}</td>
+            <td>${aircraftLabel(f.aircraft_id)}</td>
+            <td>${f.duration || '—'}h</td>
+            <td>
+              <button class="btn btn-primary" style="padding:5px 10px;font-size:11px;margin-right:6px;" onclick="updateFlightStatus('${f.id}','scheduled')">Approve</button>
+              <button class="btn btn-secondary" style="padding:5px 10px;font-size:11px;color:#f87171;border-color:rgba(239,68,68,0.3);" onclick="updateFlightStatus('${f.id}','cancelled')">Reject</button>
+            </td>
+          </tr>`).join('');
     }
 
     async function addStudent() {

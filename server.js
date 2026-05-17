@@ -219,7 +219,7 @@ app.post('/api/flights', async (req, res) => {
           date,
           time,
           duration: duration || 2,
-          status: 'scheduled'
+          status: instructorId ? 'pending_approval' : 'scheduled'
         }
       ])
       .select();
@@ -230,6 +230,26 @@ app.post('/api/flights', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// =======================
+// FLIGHT STATUS UPDATE (approve / reject)
+// =======================
+app.patch('/api/flights/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const allowed = ['scheduled', 'cancelled', 'completed', 'pending_approval'];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  const { data, error } = await supabase
+    .from('flights')
+    .update({ status })
+    .eq('id', id)
+    .select();
+  if (error) return res.status(400).json({ error: error.message });
+  if (!data.length) return res.status(404).json({ error: 'Flight not found' });
+  res.json(data[0]);
 });
 
 // =======================
