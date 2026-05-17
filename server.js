@@ -340,6 +340,54 @@ app.post('/api/maintenance', async (req, res) => {
 });
 
 // =======================
+// INOPERATIVE EQUIPMENT
+// =======================
+app.get('/api/inop', async (req, res) => {
+  const { school_id } = req.query;
+  let q = supabase.from('inop_equipment').select('*').order('date_found', { ascending: false });
+  if (school_id) q = q.eq('school_id', school_id);
+  const { data, error } = await q;
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/inop', async (req, res) => {
+  const { aircraftId, item, description, melReference, placardRequired, dateFound, schoolId } = req.body;
+  if (!aircraftId || !item || !dateFound) {
+    return res.status(400).json({ error: 'Aircraft, item, and date are required' });
+  }
+  const { data, error } = await supabase
+    .from('inop_equipment')
+    .insert([{
+      id: crypto.randomUUID(),
+      aircraft_id: aircraftId,
+      item,
+      description: description || null,
+      mel_reference: melReference || null,
+      placard_required: placardRequired || false,
+      date_found: dateFound,
+      status: 'active',
+      school_id: schoolId || null
+    }])
+    .select();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data[0]);
+});
+
+app.patch('/api/inop/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status, resolvedDate } = req.body;
+  const { data, error } = await supabase
+    .from('inop_equipment')
+    .update({ status, resolved_date: resolvedDate || null })
+    .eq('id', id)
+    .select();
+  if (error) return res.status(400).json({ error: error.message });
+  if (!data.length) return res.status(404).json({ error: 'Item not found' });
+  res.json(data[0]);
+});
+
+// =======================
 // WEATHER PROXY
 // =======================
 app.get('/api/weather/:icao', async (req, res) => {

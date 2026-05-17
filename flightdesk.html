@@ -473,6 +473,67 @@
     .empty-icon { margin-bottom: 12px; opacity: 0.4; }
     .empty-state p { font-size: 13px; }
 
+    /* ── Aircraft detail modal ── */
+    .ac-detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .ac-detail-id    { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+    .ac-detail-model { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    .ac-detail-hobbs { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .ac-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin: 20px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .ac-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(26,45,74,0.4);
+      font-size: 13px;
+    }
+    .ac-status-row:last-child { border-bottom: none; }
+    .ac-status-label { color: var(--muted); font-weight: 600; }
+    .inop-item {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .inop-item.active  { border-left: 3px solid #f87171; }
+    .inop-item.resolved { opacity: 0.45; border-left: 3px solid var(--dim); }
+    .inop-item-name { font-size: 13px; font-weight: 700; color: var(--text); }
+    .inop-item-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .inop-item-meta { font-size: 11px; color: var(--dim); margin-top: 4px; }
+    .maint-entry {
+      display: flex;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(26,45,74,0.4);
+      align-items: flex-start;
+    }
+    .maint-entry:last-child { border-bottom: none; }
+    .maint-entry-date { min-width: 80px; font-size: 12px; font-weight: 700; color: var(--text); flex-shrink: 0; }
+    .maint-entry-type { font-size: 11px; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.05em; }
+    .maint-entry-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .maint-entry-by   { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
     /* ── School picker overlay ── */
     #schoolPickerOverlay {
       position: fixed;
@@ -697,7 +758,7 @@
             <button class="btn btn-primary" onclick="openModal('aircraft')">+ Add Aircraft</button>
           </div>
           <table>
-            <thead><tr><th>N-Number</th><th>Model</th><th>Hobbs</th><th>Status</th></tr></thead>
+            <thead><tr><th>N-Number</th><th>Model</th><th>Hobbs</th><th>Status</th><th></th></tr></thead>
             <tbody id="aircraftBody"></tbody>
           </table>
         </div>
@@ -1004,6 +1065,61 @@
     </div>
   </div>
 
+  <!-- Modal: Aircraft Detail -->
+  <div class="modal-overlay" id="modal-aircraft-detail">
+    <div class="modal" style="max-width:660px;">
+      <div class="ac-detail-header">
+        <div>
+          <div class="ac-detail-id" id="acdNNumber"></div>
+          <div class="ac-detail-model" id="acdModel"></div>
+          <div class="ac-detail-hobbs" id="acdHobbs"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          <div id="acdAirworthyBadge"></div>
+          <button class="btn btn-secondary" onclick="closeModal('aircraft-detail')" style="font-size:11px;padding:5px 12px;">Close</button>
+        </div>
+      </div>
+
+      <!-- Airworthiness Summary -->
+      <div class="ac-section-title">Airworthiness Summary</div>
+      <div id="acdSummary"></div>
+
+      <!-- Inoperative Equipment -->
+      <div class="ac-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Inoperative Equipment</span>
+        <button class="btn btn-secondary admin-only" id="acdAddInopBtn" style="font-size:11px;padding:4px 10px;" onclick="showAddInopForm()">+ Add Item</button>
+      </div>
+      <div id="acdAddInopForm" style="display:none;background:var(--elevated);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><label>Item / System</label><input type="text" id="inopItem" placeholder="e.g. Comm 2, ADF, Strobes"></div>
+          <div class="form-group"><label>Date Found</label><input type="date" id="inopDate"></div>
+        </div>
+        <div class="form-group"><label>Description</label><input type="text" id="inopDesc" placeholder="Brief description of the discrepancy"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><label>MEL Reference (optional)</label><input type="text" id="inopMel" placeholder="e.g. 23-1"></div>
+          <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:22px;">
+            <input type="checkbox" id="inopPlacard" style="accent-color:var(--blue);width:15px;height:15px;">
+            <label style="font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0;">Placard required</label>
+          </div>
+        </div>
+        <div class="form-error" id="inopError"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn btn-secondary" onclick="hideAddInopForm()">Cancel</button>
+          <button class="btn btn-primary" onclick="submitInopItem()">Add Item</button>
+        </div>
+      </div>
+      <div id="acdInopList"></div>
+
+      <!-- AD Compliance -->
+      <div class="ac-section-title">Airworthiness Directives</div>
+      <div id="acdAdList"></div>
+
+      <!-- Recent Maintenance -->
+      <div class="ac-section-title">Maintenance History</div>
+      <div id="acdMaintList"></div>
+    </div>
+  </div>
+
   <!-- School Picker Overlay -->
   <div id="schoolPickerOverlay" style="display:none;">
     <div class="school-picker-card">
@@ -1055,7 +1171,8 @@
     const API = '';
     let user = null;
     let currentSchool = null;
-    let flights = [], students = [], aircraft = [], instructors = [], renters = [], maintenance = [], preflights = [];
+    let flights = [], students = [], aircraft = [], instructors = [], renters = [], maintenance = [], preflights = [], inopItems = [];
+    let currentAircraftId = null;
 
     function init() {
       const stored = localStorage.getItem('user');
@@ -1169,7 +1286,7 @@
     }
 
     async function loadAll() {
-      await Promise.all([fetchFlights(), fetchStudents(), fetchAircraft(), fetchInstructors(), fetchRenters(), fetchMaintenance(), fetchPreflights()]);
+      await Promise.all([fetchFlights(), fetchStudents(), fetchAircraft(), fetchInstructors(), fetchRenters(), fetchMaintenance(), fetchPreflights(), fetchInop()]);
       renderOverview();
     }
 
@@ -1180,6 +1297,7 @@
     async function fetchRenters()     { try { const r = await fetch(`${API}/api/renters${schoolQ()}`);     renters     = await r.json(); } catch { renters     = []; } }
     async function fetchMaintenance() { try { const r = await fetch(`${API}/api/maintenance${schoolQ()}`); maintenance = await r.json(); } catch { maintenance = []; } }
     async function fetchPreflights()  { try { const r = await fetch(`${API}/api/preflight${schoolQ()}`);   preflights  = await r.json(); } catch { preflights  = []; } }
+    async function fetchInop()        { try { const r = await fetch(`${API}/api/inop${schoolQ()}`);         inopItems   = await r.json(); } catch { inopItems   = []; } }
 
     function pilotName(id) {
       const s = students.find(s => s.id === id);
@@ -1438,7 +1556,7 @@
           : '';
 
         return `
-          <div class="insp-card">
+          <div class="insp-card" style="cursor:pointer;" onclick="openAircraftDetail('${a.id}')">
             <div class="insp-header">
               <div>
                 <div class="insp-id">${a.n_number}</div>
@@ -1541,8 +1659,20 @@
 
     function renderAircraft() {
       const tbody = document.getElementById('aircraftBody');
-      if (!aircraft.length) { tbody.innerHTML = emptyRow(4, 'No aircraft yet'); return; }
-      tbody.innerHTML = aircraft.map(a => `<tr><td><strong>${a.n_number}</strong></td><td>${a.model}</td><td>${a.hobbs}h</td><td>${badge(a.status)}</td></tr>`).join('');
+      if (!aircraft.length) { tbody.innerHTML = emptyRow(5, 'No aircraft yet'); return; }
+      tbody.innerHTML = aircraft.map(a => {
+        const activeInop = inopItems.filter(i => i.aircraft_id === a.id && i.status === 'active').length;
+        const inopBadge  = activeInop > 0
+          ? `<span class="badge badge-cancelled" style="font-size:10px;">${activeInop} inop</span>`
+          : '';
+        return `<tr style="cursor:pointer;" onclick="openAircraftDetail('${a.id}')">
+          <td><strong>${a.n_number}</strong></td>
+          <td>${a.model}</td>
+          <td>${a.hobbs}h</td>
+          <td>${badge(a.status)} ${inopBadge}</td>
+          <td style="color:var(--blue);font-size:12px;font-weight:600;">View Details ›</td>
+        </tr>`;
+      }).join('');
     }
 
     function renderInstructors() {
@@ -1963,6 +2093,206 @@
       const data = await res.json();
       if (!res.ok) { document.getElementById('renterError').textContent = data.error; return; }
       renters.push(data); closeModal('renter'); renderRenters(); renderOverview();
+    }
+
+    function openAircraftDetail(id) {
+      currentAircraftId = id;
+      const a       = aircraft.find(a => a.id === id);
+      if (!a) return;
+
+      const logs    = maintenance.filter(m => m.aircraft_id === id);
+      const inop    = inopItems.filter(i => i.aircraft_id === id);
+      const today   = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const typeMatch = (t, ...p) => p.some(x => (t||'').toLowerCase().replace(/[-_]/g,' ').includes(x));
+
+      document.getElementById('acdNNumber').textContent = a.n_number;
+      document.getElementById('acdModel').textContent   = a.model;
+      document.getElementById('acdHobbs').textContent   = `${a.hobbs} Hobbs hours`;
+
+      // ── Airworthiness summary ──
+      const hobbs = parseFloat(a.hobbs) || 0;
+
+      // 100-hour
+      const last100 = logs.filter(m => typeMatch(m.type,'100 hour','100hr') && m.hobbs_at_service != null)
+        .sort((x,y) => y.hobbs_at_service - x.hobbs_at_service)[0];
+      let hundredStatus, hundredColor, hundredLeft;
+      if (last100) {
+        hundredLeft  = 100 - (hobbs - last100.hobbs_at_service);
+        hundredColor = hundredLeft < 0 ? '#f87171' : hundredLeft < 10 ? '#f87171' : hundredLeft < 25 ? '#fcd34d' : '#6ee7b7';
+        hundredStatus = hundredLeft < 0
+          ? `<span style="color:#f87171;font-weight:700;">${Math.abs(hundredLeft).toFixed(1)}h OVERDUE</span>`
+          : `<span style="color:${hundredColor};font-weight:700;">${hundredLeft.toFixed(1)}h remaining</span>`;
+      } else {
+        hundredColor  = '#fcd34d';
+        hundredLeft   = null;
+        hundredStatus = `<span style="color:var(--dim);">No record</span>`;
+      }
+
+      // Annual
+      const lastAnnual = logs.filter(m => typeMatch(m.type,'annual') && m.next_due)
+        .sort((x,y) => y.next_due > x.next_due ? 1 : -1)[0];
+      let annualStatus, annualOk;
+      if (lastAnnual) {
+        const daysLeft = Math.ceil((new Date(lastAnnual.next_due) - today) / 86400000);
+        annualOk = daysLeft >= 0;
+        const col = daysLeft < 0 ? '#f87171' : daysLeft < 30 ? '#fcd34d' : '#6ee7b7';
+        annualStatus = daysLeft < 0
+          ? `<span style="color:#f87171;font-weight:700;">${Math.abs(daysLeft)}d OVERDUE — expired ${lastAnnual.next_due}</span>`
+          : `<span style="color:${col};font-weight:700;">Current — expires ${lastAnnual.next_due} (${daysLeft}d)</span>`;
+      } else {
+        annualOk     = false;
+        annualStatus = `<span style="color:var(--dim);">No record</span>`;
+      }
+
+      // Active inop
+      const activeInop = inop.filter(i => i.status === 'active');
+      const inopStatus = activeInop.length === 0
+        ? `<span style="color:#6ee7b7;font-weight:700;">None</span>`
+        : `<span style="color:#f87171;font-weight:700;">${activeInop.length} item${activeInop.length>1?'s':''}</span>`;
+
+      // Overall airworthy?
+      const isAirworthy = (hundredLeft === null || hundredLeft >= 0) && annualOk;
+      document.getElementById('acdAirworthyBadge').innerHTML = isAirworthy
+        ? '<span class="badge badge-airworthy" style="font-size:13px;padding:4px 14px;">Airworthy</span>'
+        : '<span class="badge badge-not-airworthy" style="font-size:13px;padding:4px 14px;">Not Airworthy</span>';
+
+      // 100-hour progress bar
+      const pct = last100 ? Math.min(Math.max((hobbs - last100.hobbs_at_service) / 100 * 100, 0), 100) : 0;
+      document.getElementById('acdSummary').innerHTML = `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;">
+            <span style="font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">100-Hour Inspection</span>
+            ${hundredStatus}
+          </div>
+          <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;border-radius:4px;background:${hundredColor};transition:width 0.4s;"></div>
+          </div>
+          ${last100 ? `<div style="font-size:10px;color:var(--dim);margin-top:4px;">Last performed ${last100.date} at ${last100.hobbs_at_service}h by ${last100.performed_by || '—'}</div>` : ''}
+        </div>
+        <div class="ac-status-row"><span class="ac-status-label">Annual Inspection</span><span>${annualStatus}</span></div>
+        <div class="ac-status-row"><span class="ac-status-label">Inoperative Equipment</span><span>${inopStatus}</span></div>`;
+
+      // ── Inop list ──
+      hideAddInopForm();
+      document.getElementById('inopDate').value = todayStr;
+      renderInopList(inop);
+
+      // ── AD compliance ──
+      const adLogs = logs.filter(m => typeMatch(m.type,'ad','airworthiness directive'));
+      document.getElementById('acdAdList').innerHTML = adLogs.length
+        ? adLogs.map(m => `
+            <div class="maint-entry">
+              <div class="maint-entry-date">${m.date}</div>
+              <div>
+                <div class="maint-entry-type">AD Compliance</div>
+                <div class="maint-entry-desc">${m.description || '—'}</div>
+                <div class="maint-entry-by">${m.performed_by || ''}</div>
+              </div>
+            </div>`).join('')
+        : '<div style="color:var(--dim);font-size:13px;padding:8px 0;">No AD compliance records logged.</div>';
+
+      // ── Maintenance history ──
+      const recentMaint = [...logs].sort((a,b) => b.date > a.date ? 1 : -1);
+      document.getElementById('acdMaintList').innerHTML = recentMaint.length
+        ? recentMaint.map(m => `
+            <div class="maint-entry">
+              <div class="maint-entry-date">${m.date}</div>
+              <div style="flex:1;">
+                <div class="maint-entry-type">${m.type}</div>
+                <div class="maint-entry-desc">${m.description || '—'}</div>
+                <div class="maint-entry-by">${[m.performed_by, m.hobbs_at_service ? m.hobbs_at_service+'h' : '', m.next_due ? 'Next due '+m.next_due : ''].filter(Boolean).join(' · ')}</div>
+              </div>
+              ${badge(m.status)}
+            </div>`).join('')
+        : '<div style="color:var(--dim);font-size:13px;padding:8px 0;">No maintenance records yet.</div>';
+
+      document.getElementById('modal-aircraft-detail').classList.add('open');
+    }
+
+    function renderInopList(inop) {
+      const active   = inop.filter(i => i.status === 'active');
+      const resolved = inop.filter(i => i.status === 'resolved');
+      const all      = [...active, ...resolved];
+      const canEdit  = user.role === 'admin' || user.role === 'instructor';
+
+      document.getElementById('acdInopList').innerHTML = all.length
+        ? all.map(i => `
+            <div class="inop-item ${i.status}">
+              <div style="flex:1;">
+                <div class="inop-item-name">${i.item}</div>
+                ${i.description ? `<div class="inop-item-desc">${i.description}</div>` : ''}
+                <div class="inop-item-meta">
+                  Found ${i.date_found}
+                  ${i.mel_reference ? ` · MEL ${i.mel_reference}` : ''}
+                  ${i.placard_required ? ' · <span style="color:#fcd34d;">Placard required</span>' : ''}
+                  ${i.status === 'resolved' ? ` · <span style="color:#6ee7b7;">Resolved ${i.resolved_date || ''}</span>` : ''}
+                </div>
+              </div>
+              ${(canEdit && i.status === 'active') ? `
+                <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;color:#6ee7b7;border-color:rgba(16,185,129,0.3);flex-shrink:0;"
+                  onclick="resolveInopItem('${i.id}')">Resolve</button>` : ''}
+            </div>`).join('')
+        : '<div style="color:var(--dim);font-size:13px;padding:8px 0;">No inoperative equipment logged.</div>';
+    }
+
+    function showAddInopForm() {
+      document.getElementById('acdAddInopForm').style.display = '';
+      document.getElementById('inopItem').value = '';
+      document.getElementById('inopDesc').value = '';
+      document.getElementById('inopMel').value  = '';
+      document.getElementById('inopPlacard').checked = false;
+      document.getElementById('inopError').textContent = '';
+    }
+
+    function hideAddInopForm() {
+      document.getElementById('acdAddInopForm').style.display = 'none';
+    }
+
+    async function submitInopItem() {
+      const item     = document.getElementById('inopItem').value.trim();
+      const dateFound = document.getElementById('inopDate').value;
+      const desc     = document.getElementById('inopDesc').value.trim();
+      const mel      = document.getElementById('inopMel').value.trim();
+      const placard  = document.getElementById('inopPlacard').checked;
+
+      if (!item || !dateFound) {
+        document.getElementById('inopError').textContent = 'Item name and date are required.';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/inop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          aircraftId: currentAircraftId, item, description: desc,
+          melReference: mel, placardRequired: placard, dateFound,
+          schoolId: currentSchool?.id
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('inopError').textContent = data.error; return; }
+
+      inopItems.push(data);
+      hideAddInopForm();
+      const inop = inopItems.filter(i => i.aircraft_id === currentAircraftId);
+      renderInopList(inop);
+      // Refresh summary active inop count
+      openAircraftDetail(currentAircraftId);
+    }
+
+    async function resolveInopItem(id) {
+      const today = new Date().toISOString().split('T')[0];
+      const res = await fetch(`${API}/api/inop/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'resolved', resolvedDate: today })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error); return; }
+      const idx = inopItems.findIndex(i => i.id === id);
+      if (idx !== -1) inopItems[idx] = data;
+      openAircraftDetail(currentAircraftId);
     }
 
     function logout() {
